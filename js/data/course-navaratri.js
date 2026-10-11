@@ -1,4 +1,6 @@
 // Navaratri course: permanent, but highlighted while the festival is on.
+// Same rules as course-vishishtadvaita.js: every question must be answerable
+// from earlier, non-deep teach cards in the same lesson.
 DH.COURSES = DH.COURSES || {};
 DH.COURSES.navaratri = {
   id: "navaratri",
@@ -86,10 +88,10 @@ DH.COURSES.navaratri = {
         {
           id: "n3-1", title: "Sarasvatī and Āyudha Pūjā",
           cards: [
-            { t: "teach", title: "Books and tools rest", body: "Near the end of Navarātri, many families honor Sarasvatī by placing books, instruments and study materials before her. On Mahānavamī, the ninth day, Āyudha Pūjā honors tools, weapons, vehicles and machines: everything that helps us work." },
+            { t: "teach", title: "Books and tools rest", body: "Near the end of Navarātri, many families honor Sarasvatī by placing books, instruments and study materials before her. The books 'rest': in many homes students don't study that day, and take their books back, often on Vijayadaśamī, to begin learning anew. On Mahānavamī, the ninth day, Āyudha Pūjā honors tools, weapons, vehicles and machines: everything that helps us work." },
             { t: "teach", title: "A prayer before studying", body: "A widely recited prayer asks Sarasvatī for success at the start of learning.", src: "sarasvati-prayer" },
             { t: "mcq", tag: "core", q: "What is honored during Āyudha Pūjā?", opts: ["Tools, instruments and vehicles", "Only weapons from wars", "Only animals", "Only temples"], a: 0, why: "Āyudha = weapon or tool. Today that includes computers and cars!" },
-            { t: "tf", tag: "trivia", q: "In many homes, students don't study on the day their books are placed before Sarasvatī.", a: true, why: "The books 'rest' and are taken back, often on Vijayadaśamī, to begin learning anew. Customs vary." },
+            { t: "tf", tag: "trivia", q: "In many homes, students don't study on the day their books are placed before Sarasvatī.", a: true, why: "Customs vary from family to family." },
             { t: "mcq", tag: "think", q: "Why would a culture honor TOOLS once a year?", opts: ["To show gratitude for what supports our work and see the sacred in everyday things", "Because tools are gods", "To get new tools", "It's only for factories"], a: 0, why: "Gratitude and seeing the divine in daily life run through many Hindu practices." },
             { t: "reflect", q: "If you did an Āyudha Pūjā today, which 'tool' in your life would you thank?" }
           ]
@@ -98,7 +100,7 @@ DH.COURSES.navaratri = {
           id: "n3-2", title: "Two victories",
           cards: [
             { t: "teach", title: "The Goddess wins", body: "For many, Vijayadaśamī celebrates the Goddess's victory over Mahiṣāsura. In Bengal, Durgā's images are immersed in water as she 'returns home'." },
-            { t: "teach", title: "Rāma wins", body: "In much of North India, Vijayadaśamī (Dussehra) celebrates Rāma's victory over Rāvaṇa. Rāmlīlā plays end with huge Rāvaṇa effigies burned. Yes, our own Angada is in that story! His famous 'unmovable foot' scene, a Rāmlīlā favorite, comes from Tulsīdās's Hindi retelling.", src: "tulsidas-angada" },
+            { t: "teach", title: "Rāma wins", body: "In much of North India, Vijayadaśamī (Dussehra) celebrates Rāma's victory over Rāvaṇa. Rāmlīlā plays end with huge Rāvaṇa effigies burned. Yes, our own Angada is in that story: before the war, Rāma sent him into Rāvaṇa's court as his messenger! His famous 'unmovable foot' scene, a Rāmlīlā favorite, comes from Tulsīdās's Hindi retelling.", src: "tulsidas-angada" },
             { t: "mcq", tag: "core", q: "In North Indian Dussehra, whose victory is celebrated?", opts: ["Rāma's victory over Rāvaṇa", "Kṛṣṇa's victory over Kaṃsa", "Arjuna's victory", "Indra's victory"], a: 0, why: "Rāmlīlā ends with burning effigies of Rāvaṇa." },
             { t: "mcq", tag: "think", q: "Two different stories for the same day. Which explanation is most reasonable?", opts: ["Different regions attached their important victory stories to the same 'day of victory'", "One story is fake", "They are the same story", "It's a calendar mistake"], a: 0, why: "Festivals collect meanings over centuries. Both are honored in tradition." },
             { t: "mcq", tag: "trivia", q: "Which vānara, our mascot, was Rāma's messenger to Rāvaṇa's court?", opts: ["Angada", "Sugrīva", "Vālī", "Jāmbavān"], a: 0, why: "That's me! Jāmbavān was a bear, by the way." },
