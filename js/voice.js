@@ -255,16 +255,35 @@ DH.voice = {
       var chosen = order.filter(function (m) { return m[1] === pref; });
       order = chosen.concat(order.filter(function (m) { return m[1] !== pref; }));
     }
-    var rank = function (x) { return (g && self.gender(x) === g ? 2 : 0) + (self.family(x) === fam ? 1 : 0); };
-    for (var i = 0; i < order.length; i++) {
-      var list = this.forLang(order[i][0]);
-      if (order[i][0] === "en-IN") list = list.filter(function (v) { return /en[-_]IN/i.test(v.lang); });
-      if (!list.length) continue;
-      // Same gender and same family first, so the switch is less noticeable.
-      var best = list.slice().sort(function (a, b) { return rank(b) - rank(a); })[0];
-      return { voice: best, mode: order[i][1] };
+    // Auto: Telugu or Kannada (keep final vowels), else Hindi. No Indian English:
+    // two different English voices back to back sounded the most disjointed.
+    if (pref === "auto") order = order.filter(function (m) { return m[1] !== "enin"; });
+    // Same gender, same company, and both on-device (or both online) switch the most smoothly.
+    var local = !!(matchVoice && matchVoice.localService);
+    var rank = function (x) { return (g && self.gender(x) === g ? 4 : 0) + (self.family(x) === fam ? 2 : 0) + (!!x.localService === local ? 1 : 0); };
+    var lists = order.map(function (m) {
+      var list = self.forLang(m[0]);
+      if (m[0] === "en-IN") list = list.filter(function (v) { return /en[-_]IN/i.test(v.lang); });
+      return list.slice().sort(function (a, b) { return rank(b) - rank(a); });
+    });
+    // Pass 1: never switch gender. Take the first language with a same-gender voice.
+    if (g) {
+      for (var i = 0; i < order.length; i++) {
+        var same = lists[i].find(function (x) { return self.gender(x) === g; });
+        if (same) return { voice: same, mode: order[i][1] };
+      }
+    }
+    // Pass 2: no same-gender Indian voice exists; take the best one (say() then
+    // switches the main voice to match its gender, if it can).
+    for (var j = 0; j < order.length; j++) {
+      if (lists[j].length) return { voice: lists[j][0], mode: order[j][1] };
     }
     return null;
+  },
+  // A main voice in this language matching a gender ("f"/"m"), if any.
+  sameGenderMain: function (lang, g) {
+    var self = this;
+    return this.forLang(lang).find(function (v) { return self.gender(v) === g; }) || null;
   },
   // For the "one voice for everything" settings.
   indianEnglish: function (matchVoice) {
@@ -318,8 +337,8 @@ DH.voice = {
   // Guess a voice's gender from its name, to pair similar-sounding voices.
   gender: function (v) {
     var n = (v && v.name || "").toLowerCase();
-    if (/zira|aria|jenny|samantha|susan|heera|kalpana|swara|neerja|ava|allison|emma|michelle|sonia|libby|veena|lekha|female|woman|karen|moira|tessa|fiona|victoria|google hindi|google हिन्दी|google us english/.test(n)) return "f";
-    if (/david|mark|guy|ravi|hemant|madhur|prabhat|alex|daniel|tom|ryan|eric|christopher|male|man|fred|rishi|aaron/.test(n)) return "m";
+    if (/zira|aria|jenny|samantha|susan|heera|kalpana|swara|neerja|\bava\b|allison|emma|michelle|sonia|libby|veena|lekha|female|woman|karen|moira|tessa|fiona|victoria|shruti|sapna|pallavi|kavya|aarohi|\bana\b|jane|nancy|sara|google hindi|google हिन्दी|google us english/.test(n)) return "f";
+    if (/david|mark|guy|ravi|hemant|madhur|prabhat|alex|daniel|\btom\b|ryan|eric|christopher|\bmale\b|\bman\b|fred|rishi|aaron|mohan|gagan|valluvar|andrew|brian|roger|steffan|davis|jason|tony|kunal|aarav/.test(n)) return "m";
     return "";
   },
   INDIC: ["hi", "sa", "ta", "te", "kn", "ml", "mr", "gu", "bn", "pa", "or", "as", "ne", "kok", "mai", "si"],
@@ -353,7 +372,7 @@ DH.voice = {
     this.stop();
     var self = this, synth = window.speechSynthesis;
     var rate = parseFloat(((DH.store.state || {}).prefs || {}).rate) || 1;
-    var queue = [], missing = false;
+    var queue = [], missing = false, warm = null;
     var add = function (t, v) {
       self.chunks(t).forEach(function (c) {
         var u = new SpeechSynthesisUtterance(c);
@@ -362,6 +381,12 @@ DH.voice = {
       });
     };
     var mainVoice = self.pick(DH.lang());
+    // Decide gender once for the whole reading, so it never flips between parts.
+    if (mainVoice && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
+      var nv0 = self.nameVoice(mainVoice, false);
+      var g0 = self.gender(mainVoice), g1 = nv0 && self.gender(nv0.voice);
+      if (g0 && g1 && g0 !== g1) mainVoice = self.sameGenderMain(DH.lang(), g1) || mainVoice;
+    }
     parts.forEach(function (p) {
       var lang = p.lang || DH.lang();
       var text = self.clean(p.text);
@@ -369,7 +394,7 @@ DH.voice = {
       if (lang === "sa") {
         // Indian English can read the verse's romanized form (p.iast), if we have it.
         var vp = ((DH.store.state.prefs) || {}).nameVoice || "auto";
-        if ((vp === "auto" || vp === "one-main") && p.iast && /^en/i.test(mainVoice.lang)) { add(self.respellUS(p.iast, true), mainVoice); return; } // default: one American voice
+        if (vp === "one-main" && p.iast && /^en/i.test(mainVoice.lang)) { add(self.respellUS(p.iast, true), mainVoice); return; } // "one American voice" setting
         if (vp === "one-enin" && p.iast && self.indianEnglish(mainVoice)) { add(self.respell(p.iast), self.indianEnglish(mainVoice)); return; }
         var sv = self.nameVoice(mainVoice, !p.iast);
         if (!sv) { missing = true; return; }
@@ -377,12 +402,12 @@ DH.voice = {
         else add(sv.mode === "hi" ? text : self.fromDeva(text, sv.mode), sv.voice);
         return;
       }
-      var voice = self.pick(lang);
+      var voice = lang === DH.lang() ? mainVoice : self.pick(lang);
       if (!voice) { missing = true; return; }
       if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) >= 0) { add(text, voice); return; }
       // "One voice for everything" settings: no switching at all.
       var namePref = ((DH.store.state.prefs) || {}).nameVoice || "auto";
-      if ((namePref === "auto" || namePref === "one-main") && /^en/i.test(voice.lang)) { add(self.respellUS(text), voice); return; } // default: one American voice, names respelled
+      if (namePref === "one-main" && /^en/i.test(voice.lang)) { add(self.respellUS(text), voice); return; } // "one American voice" setting
       if (namePref === "one-enin" && /^en/i.test(voice.lang)) {
         var ie = self.indianEnglish(voice);
         add(self.respell(text), ie || voice);
@@ -392,10 +417,33 @@ DH.voice = {
       // Indian English or Hindi). With none, fall back to English respelling.
       var nv = self.nameVoice(voice, false);
       if (!nv) { add(self.respell(text), voice); return; }
-      self.segments(text).forEach(function (s) {
-        if (s.indic) add(self.forMode(s, nv.mode), nv.voice); else add(s.text, voice);
+      // Never mix male and female: if the Indian voice's gender differs, switch
+      // the main voice to match (only when the main voice is on Automatic).
+      var gm = self.gender(voice), gn = self.gender(nv.voice);
+      if (gm && gn && gm !== gn && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
+        voice = self.sameGenderMain(lang, gn) || voice;
+      }
+      if (!nv.voice.localService) warm = warm || nv.voice; // online voices are slow to start
+      // Fewer switches = smoother: short linking words between two Indian runs
+      // ("Rāmānuja and Śaṅkara") are said by the Indian voice too.
+      var segs = self.segments(text), merged = [];
+      segs.forEach(function (s, i) {
+        var prev = merged[merged.length - 1], next = segs[i + 1];
+        var link = !s.indic && prev && prev.indic && next && next.indic &&
+          /^(,|and|or|of|the|in|to|a|an|&|vs\.?|,? and|,? or)$/i.test(s.text.trim());
+        if (link) { prev.spoken += " " + s.text.trim() + " "; prev.join = true; return; }
+        var spoken = s.indic ? self.forMode(s, nv.mode) : s.text;
+        if (s.indic && prev && prev.indic && prev.join) { prev.spoken += spoken; prev.join = false; return; }
+        merged.push({ indic: s.indic, spoken: spoken });
       });
+      merged.forEach(function (m) { add(m.spoken, m.indic ? nv.voice : voice); });
     });
+    // Warm up an online Indian voice silently first, so it doesn't pause mid-sentence.
+    if (warm) {
+      var w = new SpeechSynthesisUtterance(".");
+      w.voice = warm; w.lang = warm.lang; w.volume = 0; w.rate = 2;
+      queue.unshift(w);
+    }
     if (!queue.length) {
       DH.app.toast(DH.tr("No voice for this language on your device. You can add one in your device's language or speech settings."));
       return;

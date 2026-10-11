@@ -855,9 +855,10 @@ DH.app = {
             var nv = DH.voice.nameVoice(DH.voice.pick(DH.lang()), false);
             var cur2 = p.nameVoice || "auto";
             var opt = function (v, label) { return '<option value="' + v + '"' + (cur2 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
-            var one = cur2 === "auto" || cur2 === "one-main";
+            var one = cur2 === "one-main";
             return '<label class="field"><span>' + t("Voice for Sanskrit and Indian names") + '</span><select data-pref="nameVoice">' +
-              opt("auto", "Same voice, pronounced as closely as possible (recommended)") +
+              opt("auto", "Automatic: an Indian voice for names, same gender (recommended)") +
+              opt("one-main", "One American voice for everything (names spelled out)") +
               opt("one-enin", "One Indian English voice for everything") +
               opt("te", "Switch to a Telugu voice for names") + opt("kn", "Switch to a Kannada voice for names") +
               opt("enin", "Switch to an Indian English voice for names") + opt("hi", "Switch to a Hindi voice for names (drops the final 'a')") +
