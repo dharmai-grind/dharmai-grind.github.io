@@ -42,9 +42,9 @@ DH.app = {
     DH.i18n.flush(rerender);
   },
 
+  // Navaratri dates are calculated for every year (js/calendar.js).
   festivalOn: function () {
-    var t = DH.today();
-    return (DH.config.NAVARATRI || []).some(function (r) { return t >= r.start && t <= r.end; });
+    return DH.calendar.festivalOn();
   },
 
   // ---------- Onboarding ----------

@@ -20,7 +20,7 @@ Live site (once published): https://dharmai-grind.github.io
 | `js/core.js`, `js/lesson.js`, `js/app.js` | How the app works |
 | `worker/worker.js` | The free AI helper that runs on Cloudflare (keeps the API key secret) |
 
-Progress, XP and streaks are saved only in each visitor's browser. There are no accounts and no personal data.
+Progress, XP and streaks are saved in each visitor's browser. Visitors can optionally create an account (username + password only, no email) to sync progress across devices.
 
 ## Every update
 
@@ -28,7 +28,7 @@ Bump the `?v=` number on every file link in `index.html` (e.g. `?v=4` to `?v=5`)
 
 ## Every year
 
-Add the new Navaratri dates to `js/config.js` so the "Happening now" badge shows at the right time.
+Nothing! Navaratri dates are calculated automatically every year (`js/calendar.js`, from the new moon and the Sun entering sidereal Libra). Checked against 2021–2026. If a year is ever a day off, add an override in `js/config.js`.
 
 ## Connecting the AI (free)
 

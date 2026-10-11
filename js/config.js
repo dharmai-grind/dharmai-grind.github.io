@@ -6,7 +6,8 @@ window.DH = window.DH || {};
 DH.config = {
   WORKER_URL: "https://dharmai.ananya-s13156.workers.dev",
   APP_NAME: "DHARMAi",
-  // Sharada Navaratri dates (first day to Vijayadashami). Add a line each year.
+  // Navaratri dates are calculated automatically for every year (js/calendar.js).
+  // Only add a line here to override a year if the calculation is ever a day off.
   NAVARATRI: [
     { start: "2026-10-11", end: "2026-10-21" }
   ]
