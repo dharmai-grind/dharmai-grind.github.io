@@ -63,7 +63,7 @@ DH.app = {
 
     if (name === "welcome") {
       body = '<div class="center-screen">' + DH.angada(170, "cheer") +
-        '<h1 class="brand">dharm<span>AI</span></h1>' +
+        '<h1 class="brand">DHARM<span>Ai</span></h1>' +
         '<div class="bubble">' + t("Namaste! I'm Angada. In the Rāmāyaṇa I carried Rāma's message into Rāvaṇa's court and stood my ground. Let's explore big ideas together, a few minutes at a time.") + "</div>" +
         '<button class="btn primary wide" id="next">' + t("Get started") + "</button>" +
         (DH.ai.configured() ? '<button class="btn wide" id="haveAcc">' + t("I already have an account") + "</button>" : "") + "</div>";
@@ -299,7 +299,7 @@ DH.app = {
     var nav = [["learn", "ti-home", "Learn"], ["courses", "ti-books", "Courses"], ["ask", "ti-message-circle", "Ask"], ["debate", "ti-swords", "Debate"], ["me", "ti-user", "Profile"]];
     var st = DH.store.state;
     var html = '<div class="shell"><header class="topbar">' +
-      '<span class="brand small">dharm<span>AI</span></span>' +
+      '<span class="brand small">DHARM<span>Ai</span></span>' +
       '<span class="pill saffron"><i class="ti ti-flame"></i> ' + DH.streakNow() + "</span>" +
       '<span class="pill purple"><i class="ti ti-bolt"></i> ' + st.xp + " " + DH.t("XP") + "</span></header>" +
       '<main class="screen">' + content + "</main>" +
