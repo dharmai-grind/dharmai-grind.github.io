@@ -31,6 +31,7 @@ DH.store = {
       ask: [],          // Ask chat
       debate: null,     // current debate: { topic, side, sides, msgs, summary }
       savedDebates: [], // debates saved from lessons for later: { topic, side, from }
+      levels: {},       // how well you know each topic, e.g. { calculus: "new" }
       account: null,    // { username, token } when logged in
       updatedAt: 0
     };
@@ -130,6 +131,11 @@ DH.account = {
     DH.store.save(true);
     DH.app.toast(DH.tr("You've been logged out. Log in again to keep syncing."));
   }
+};
+
+// Philosophy school courses (not festivals or topics like science).
+DH.isSchool = function (course) {
+  return !!course && !course.festival && course.kind !== "topic";
 };
 
 DH.lang = function () {
@@ -282,8 +288,11 @@ DH.ai = {
     var p = DH.store.state.prefs || {};
     // The school course you're currently in counts as what you're studying.
     var active = DH.COURSES[DH.store.state.active];
-    var school = active && !active.festival ? active.title : (p.school || "");
-    return { school: school, tradition: p.tradition || "", language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both" };
+    var school = active && DH.isSchool(active) ? active.title : (p.school || "");
+    // How well the learner knows each topic, so the AI can pitch its answers.
+    var lv = DH.store.state.levels || {};
+    var levels = Object.keys(lv).map(function (k) { return k + ": " + lv[k]; }).join(", ");
+    return { levels: levels, school: school, tradition: p.tradition || "", language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both" };
   },
   // Only keep citations that really are in the passages we sent.
   clean: function (answer, ids) {

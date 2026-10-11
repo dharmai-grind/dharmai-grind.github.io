@@ -163,6 +163,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .unit-head span { font-size: 0.88rem; opacity: 0.92; }
 .unit-head.teal { background: var(--teal); } .unit-head.pink { background: var(--pink); }
 .unit-head.purple { background: var(--purple); } .unit-head.blue { background: var(--blue); }
+.unit-head.saffron { background: var(--saffron-d); }
+.node.done.saffron, .node.current.saffron { background: var(--saffron-d); }
+.chip.on.saffron { background: var(--saffron-l); border-color: var(--saffron); color: var(--saffron-ink); }
+.cc-icon.saffron { background: var(--saffron-l); color: var(--saffron-ink); }
 .node.done.purple, .node.current.purple { background: var(--purple); }
 .node.done.blue, .node.current.blue { background: var(--blue); }
 .chip.on.purple { background: var(--purple-l); border-color: var(--purple); color: var(--purple-ink); }

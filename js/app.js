@@ -86,7 +86,10 @@ DH.app = {
         '<div class="opts">' + group("school") + "</div>" +
         '<div class="or"><span>' + t("or") + "</span></div>" +
         "<h2>" + t("A festival") + "</h2>" +
-        '<div class="opts">' + group("festival") + "</div>";
+        '<div class="opts">' + group("festival") + "</div>" +
+        '<div class="or"><span>' + t("or") + "</span></div>" +
+        "<h2>" + t("A topic") + "</h2>" +
+        '<div class="opts">' + group("topic") + "</div>";
     }
     if (name === "tradition") {
       body = "<h1>" + t("Any particular tradition or background?") + "</h1>" +
@@ -162,7 +165,7 @@ DH.app = {
       });
     }
     document.getElementById("next").onclick = function () {
-      if (name === "school" && !draft.start) return err("Pick a school or a festival to continue");
+      if (name === "school" && !draft.start) return err("Pick a school, festival or topic to continue");
       if (name === "tradition") draft.tradition = document.getElementById("trad").value.trim();
       if (name === "language") draft.lang = draft.lang || "en";
       if (name === "length" && !draft.length) return err("Pick a lesson length");
@@ -180,7 +183,7 @@ DH.app = {
   finishOnboarding: function (draft) {
     var st = DH.store.state;
     var start = DH.COURSES[draft.start] ? draft.start : "vishishtadvaita";
-    var isSchool = !DH.COURSES[start].festival;
+    var isSchool = DH.isSchool(DH.COURSES[start]);
     st.prefs = {
       // "school" tells the AI which school the learner is studying (if any).
       school: isSchool ? start : "",
@@ -390,9 +393,54 @@ DH.app = {
         }
         var lesson;
         course.units.forEach(function (u) { u.lessons.forEach(function (l) { if (l.id === b.dataset.lesson) lesson = l; }); });
-        new DH.Lesson(course, lesson, function () { self.go("learn"); }).start();
+        var start = function () { new DH.Lesson(course, lesson, function () { self.go("learn"); }).start(); };
+        var unit = DH.unitOf(course, lesson.id);
+        // First lesson in a unit with a topic: ask how well they know it.
+        if (unit.topic && !(st.levels || {})[unit.topic]) self.askLevel(unit, start);
+        else start();
       };
     });
+  },
+
+  // "How well do you know calculus?" Shown before a unit's first lesson.
+  askLevel: function (unit, then) {
+    var self = this, t = DH.t, chosen = null;
+    var html = '<div class="onboard"><div class="lesson-top"><button class="icon-btn" id="back" aria-label="Back"><i class="ti ti-x"></i></button></div>' +
+      '<div class="ob-body"><div class="auth-head">' + DH.angada(80, "think") + "<h1>" + t("How well do you know " + unit.topicLabel + "?") + "</h1></div>" +
+      "<p>" + t("This shapes the lessons in this unit. New learners get the story and ideas in plain words; if you know more, you'll also see the technical details. You can change it anytime in Profile.") + "</p>" +
+      '<div class="opts">' + DH.LEVELS.map(function (l) {
+        return '<button class="opt big" data-lv="' + l[0] + '"><b>' + t(l[1]) + "</b><small>" + t(l[2]) + "</small></button>";
+      }).join("") + "</div></div>" +
+      '<div class="lesson-foot"><div class="err" id="err"></div><button class="btn primary" id="next">' + t("Start lesson") + "</button></div></div>";
+    self.paint(html, function () { self.askLevel(unit, then); });
+    document.getElementById("back").onclick = function () { self.go("learn"); };
+    document.querySelectorAll("[data-lv]").forEach(function (b) {
+      b.onclick = function () {
+        chosen = b.dataset.lv;
+        document.querySelectorAll("[data-lv]").forEach(function (x) { x.classList.remove("sel"); });
+        b.classList.add("sel");
+        document.getElementById("err").textContent = "";
+      };
+    });
+    document.getElementById("next").onclick = function () {
+      if (!chosen) { document.getElementById("err").textContent = DH.tr("Pick one to continue"); return; }
+      var st = DH.store.state;
+      st.levels = st.levels || {};
+      st.levels[unit.topic] = chosen;
+      DH.store.save();
+      then();
+    };
+  },
+
+  // Every unit topic across all courses, for the Profile screen.
+  allTopics: function () {
+    var out = [];
+    Object.keys(DH.COURSES).forEach(function (cid) {
+      DH.COURSES[cid].units.forEach(function (u) {
+        if (u.topic && !out.some(function (x) { return x.topic === u.topic; })) out.push({ topic: u.topic, label: u.topicLabel, course: cid });
+      });
+    });
+    return out;
   },
 
   addCourse: function (id) {
@@ -424,7 +472,8 @@ DH.app = {
     };
     return "<h1>" + DH.t("Courses") + "</h1><p>" + DH.t("Take as many as you like at the same time.") + "</p>" +
       "<h2>" + DH.t("Philosophical schools") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "school"; }).map(card).join("") +
-      "<h2>" + DH.t("Festivals") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "festival"; }).map(card).join("");
+      "<h2>" + DH.t("Festivals") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "festival"; }).map(card).join("") +
+      "<h2>" + DH.t("Topics") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "topic"; }).map(card).join("");
   },
 
   bind_courses: function () {
@@ -495,7 +544,7 @@ DH.app = {
     var st = DH.store.state, self = this;
     var msgs = st.ask.map(function (m) { return self.bubble(m); }).join("");
     var empty = !st.ask.length
-      ? '<div class="ask-empty">' + DH.angada(110, "happy") + '<h1 class="ask-title">' + DH.t("AI and Dharma") + "</h1><p>" + DH.t("Ask me anything about Hindu philosophy, history, texts or festivals. I'll point you to the sources.") + "</p>" +
+      ? '<div class="ask-empty">' + DH.angada(110, "happy") + '<h1 class="ask-title">' + DH.t("AI and Dharma") + "</h1><p>" + DH.t("Ask me anything about Hindu dharma: philosophy, history, texts, festivals, or ancient Indian science. I'll point you to the sources.") + "</p>" +
         '<div class="suggest">' + ["What is the difference between Advaita and Vishishtadvaita?", "Why do we keep Golu?", "What does tat tvam asi mean?", "Who were the Āḻvārs?"].map(function (q) {
           return '<button class="chip" data-q="' + DH.esc(DH.tr(q)) + '">' + DH.t(q) + "</button>";
         }).join("") + "</div></div>" : "";
@@ -767,6 +816,18 @@ DH.app = {
       '<label class="field"><span>' + t("Lesson length") + "</span>" + sel("length", [["short", "About 2 minutes"], ["medium", "About 5 minutes"], ["long", "10 minutes or more"]]) + "</label>" +
       '<label class="field"><span>' + t("More of") + "</span>" + sel("focus", [["think", "Critical thinking"], ["trivia", "Trivia"], ["both", "Both"]]) + "</label>" +
       '<label class="field"><span>' + t("Debates") + "</span>" + sel("debate", [["choose", "Yes, I pick my side"], ["assign", "Yes, assign me a side"], ["both", "Yes, let me argue both sides"], ["none", "No debates, just lessons"]]) + "</label>" +
+      (function () {
+        var topics = DH.app.allTopics().filter(function (x) { return st.courses.indexOf(x.course) >= 0; });
+        if (!topics.length) return "";
+        var lv = st.levels || {};
+        return "<h2>" + t("Your level in each topic") + '</h2><p class="small">' + t("Sets how technical each unit's lessons get.") + "</p>" +
+          topics.map(function (x) {
+            return '<label class="field"><span>' + t(x.label.charAt(0).toUpperCase() + x.label.slice(1)) + '</span><select data-level="' + x.topic + '">' +
+              '<option value=""' + (lv[x.topic] ? "" : " selected") + ">" + t("Not set yet (asked at the first lesson)") + "</option>" +
+              DH.LEVELS.map(function (l) { return '<option value="' + l[0] + '"' + (lv[x.topic] === l[0] ? " selected" : "") + ">" + t(l[1]) + "</option>"; }).join("") +
+              "</select></label>";
+          }).join("");
+      })() +
       '<p class="small" id="saved"></p>' +
       "<h2>" + t("About dharmAI") + "</h2><p>" + t("dharmAI teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
       "<h2>" + t("Privacy") + "</h2><p class=\"small\">" + t("Accounts need only a username and password. Passwords are stored scrambled, so nobody can read them. Your progress and chats are stored to sync your account; don't put personal information in them.") + "</p>" +
@@ -781,6 +842,14 @@ DH.app = {
         st.prefs[el.dataset.pref] = el.value.trim();
         DH.store.save();
         if (el.dataset.pref === "lang") { self.applyDir(); self.go("me"); return; }
+        document.getElementById("saved").textContent = DH.tr("Saved");
+      };
+    });
+    document.querySelectorAll("[data-level]").forEach(function (el) {
+      el.onchange = function () {
+        st.levels = st.levels || {};
+        if (el.value) st.levels[el.dataset.level] = el.value; else delete st.levels[el.dataset.level];
+        DH.store.save();
         document.getElementById("saved").textContent = DH.tr("Saved");
       };
     });

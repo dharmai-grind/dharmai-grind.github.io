@@ -13,8 +13,27 @@ DH.shuffle = function (arr) {
 // ---------- Fitting a lesson to the learner ----------
 // Lesson length decides how many questions and whether deep-dive cards show.
 // Focus (critical thinking / trivia / both) decides which questions are picked.
-DH.buildLesson = function (lesson, prefs) {
+// Topic level (for units with a "topic", like calculus): "new" | "basics" | "well".
+// Cards marked lv: "new" are only for beginners (plain-words history);
+// cards marked lv: "adv" are only for people who know the basics or more (the math).
+DH.LEVELS = [
+  ["new", "New to it", "Keep it to the story and ideas, no jargon"],
+  ["basics", "Know the basics", "Show me some of the math"],
+  ["well", "Know it well", "Go into the details"]
+];
+DH.levelFits = function (card, level) {
+  if (!card.lv) return true;
+  if (card.lv === "new") return level === "new";
+  if (card.lv === "adv") return level === "basics" || level === "well";
+  return true;
+};
+DH.unitOf = function (course, lessonId) {
+  return course.units.find(function (u) { return u.lessons.some(function (l) { return l.id === lessonId; }); });
+};
+
+DH.buildLesson = function (lesson, prefs, level) {
   prefs = prefs || {};
+  lesson = Object.assign({}, lesson, { cards: lesson.cards.filter(function (c) { return DH.levelFits(c, level); }) });
   var len = prefs.length || "medium";
   var quota = { short: 3, medium: 5, long: 99 }[len];
   var focus = prefs.focus || "both";
@@ -113,7 +132,9 @@ DH.Lesson = function (course, lesson, onExit) {
   this.course = course;
   this.lesson = lesson;
   this.onExit = onExit;
-  this.queue = DH.buildLesson(lesson, DH.store.state.prefs).map(function (c) { return Object.assign({}, c); });
+  var unit = DH.unitOf(course, lesson.id);
+  var level = unit && unit.topic ? (DH.store.state.levels || {})[unit.topic] || "new" : null;
+  this.queue = DH.buildLesson(lesson, DH.store.state.prefs, level).map(function (c) { return Object.assign({}, c); });
   this.total = this.queue.length;
   this.i = 0;
   this.xp = 0;

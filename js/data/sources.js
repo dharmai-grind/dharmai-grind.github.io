@@ -265,6 +265,148 @@ DH.SOURCES = {
     en: "The Haridāsas ('servants of Hari') spread Dvaita devotion through songs in Kannada, not just Sanskrit. Purandaradāsa, a student of Vyāsatīrtha, is called the grandfather of Carnatic music. A famous story says that when Kanakadāsa was kept out of the Udupi temple, Kṛṣṇa turned to face him through a small window, still called 'Kanakana Kiṇḍi' (Kanaka's window).",
     tags: "haridasa purandaradasa kanakadasa kanakana kindi udupi kannada songs carnatic music dvaita bhakti"
   },
+  // ---- Science ----
+  "panini-1.1.1": {
+    kind: "verse", work: "Pāṇini, Aṣṭādhyāyī", ref: "1.1.1–2",
+    sa: "वृद्धिरादैच् । अदेङ् गुणः ।",
+    iast: "vṛddhir ādaic | adeṅ guṇaḥ",
+    en: "'vṛddhi' is the name for ā, ai and au. 'guṇa' is the name for a, e and o. (The first two rules: Pāṇini defines technical labels for groups of sounds.)",
+    tags: "panini ashtadhyayi grammar sutra rule vrddhi guna linguistics sanskrit technical term"
+  },
+  "panini-1.4.2": {
+    kind: "verse", work: "Pāṇini, Aṣṭādhyāyī", ref: "1.4.2",
+    sa: "विप्रतिषेधे परं कार्यम् ।",
+    iast: "vipratiṣedhe paraṃ kāryam",
+    en: "When two rules conflict, the later one applies.",
+    tags: "panini conflict rule ordering meta rule later rule wins grammar algorithm"
+  },
+  "shiva-sutras": {
+    kind: "verse", work: "Māheśvara (Śiva) Sūtras", ref: "first sūtra, used with Pāṇini's grammar",
+    sa: "अइउण् । ऋऌक् । …",
+    iast: "a i u ṇ | ṛ ḷ k | …",
+    en: "Fourteen short lines listing the sounds of Sanskrit, each ending with a marker letter. By naming a start sound and a marker, Pāṇini can refer to a whole group: 'ak' means a, i, u, ṛ, ḷ.",
+    tags: "shiva sutras maheshvara sutras pratyahara sound groups abbreviation panini compression linguistics"
+  },
+  "panini-summary": {
+    kind: "summary", work: "Pāṇini, Aṣṭādhyāyī", ref: "c. 4th century BCE",
+    en: "Pāṇini's Aṣṭādhyāyī ('eight chapters') describes Sanskrit in about 4,000 very short rules (sūtras). Starting from roots and endings, the rules apply step by step to generate correct words and sentences, with meta-rules that decide which rule applies when. Modern linguists compare it to generative grammar, and computer scientists to formal notations like Backus–Naur form.",
+    tags: "panini ashtadhyayi generative grammar linguistics computer science backus naur chomsky rules sutras"
+  },
+  "lokavibhaga": {
+    kind: "summary", work: "Lokavibhāga (Jain cosmology text)", ref: "dated 458 CE",
+    en: "The Lokavibhāga, a Jain text on cosmology, is one of the earliest securely dated texts to use a decimal place-value system with a word for zero (śūnya, 'empty').",
+    tags: "lokavibhaga jain place value decimal zero shunya earliest dated number system"
+  },
+  "brahmagupta-zero": {
+    kind: "summary", work: "Brahmagupta, Brāhmasphuṭasiddhānta", ref: "628 CE, chapter 18",
+    en: "Brahmagupta gave the first known rules for calculating with zero as a number: a number minus itself is zero; zero added to a number leaves it unchanged; a number times zero is zero. He also gave rules for negative numbers, which he called 'debts', and positive numbers, 'fortunes'. His rule for dividing by zero was not correct by modern standards.",
+    tags: "brahmagupta brahmasphutasiddhanta zero rules arithmetic negative numbers debts fortunes 628 division by zero"
+  },
+  "numerals-travel": {
+    kind: "summary", work: "How Indian numerals spread", ref: "historical overview",
+    en: "Indian decimal numerals with zero were adopted by scholars writing in Arabic. Al-Khwārizmī wrote on 'Indian reckoning' in the 9th century, and Fibonacci promoted the system in Europe in his Liber Abaci (1202). That's why Europeans called them 'Arabic numerals'; Arabic writers often called them 'Indian numerals'.",
+    tags: "hindu arabic numerals spread al khwarizmi fibonacci liber abaci europe arabic indian numerals history"
+  },
+  "baudhayana-diagonal": {
+    kind: "verse", work: "Baudhāyana Śulba Sūtra", ref: "1.48 (numbering varies by edition)",
+    sa: "दीर्घचतुरश्रस्याक्ष्णयारज्जुः पार्श्वमानी तिर्यङ्मानी च यत्पृथग्भूते कुरुतस्तदुभयं करोति ।",
+    iast: "dīrgha-caturaśrasyākṣṇayā-rajjuḥ pārśvamānī tiryaṅmānī ca yat pṛthag-bhūte kurutas tad ubhayaṃ karoti",
+    en: "The diagonal rope of a rectangle produces (an area equal to) both of what its length and width produce separately. In modern terms: the square on the diagonal equals the sum of the squares on the two sides.",
+    tags: "baudhayana sulba sutra pythagorean theorem diagonal rectangle square geometry altar"
+  },
+  "baudhayana-root2": {
+    kind: "verse", work: "Baudhāyana Śulba Sūtra", ref: "2.12 (numbering varies by edition)",
+    sa: "प्रमाणं तृतीयेन वर्धयेत्तच्चतुर्थेनात्मचतुस्त्रिंशोनेन सविशेषः ।",
+    iast: "pramāṇaṃ tṛtīyena vardhayet tac caturthenātma-catustriṃśonena saviśeṣaḥ",
+    en: "Increase the measure by its third, and that (third) by its own fourth, less the thirty-fourth part of that; this is the diagonal (of a square), with a small excess. In numbers: √2 ≈ 1 + 1/3 + 1/(3×4) − 1/(3×4×34) ≈ 1.4142157.",
+    tags: "baudhayana square root of 2 root two approximation sulba sutra diagonal of square"
+  },
+  "sulba-summary": {
+    kind: "summary", work: "The Śulba Sūtras", ref: "c. 800–200 BCE",
+    en: "The Śulba Sūtras ('rules of the cord') are manuals for building Vedic fire altars of exact shapes and areas using ropes and pegs. They include the diagonal rule (the 'Pythagorean' relationship), Pythagorean triples like 3-4-5 and 5-12-13, a close value for √2, and ways to turn a square into a circle of about the same area. The same diagonal relationship was also known independently elsewhere, for example in Babylon.",
+    tags: "sulba sutras baudhayana apastamba katyayana altar geometry rope triples pythagorean babylon"
+  },
+  "aryabhata-pi": {
+    kind: "verse", work: "Āryabhaṭa, Āryabhaṭīya", ref: "Gaṇitapāda 10 (499 CE)",
+    sa: "चतुरधिकं शतमष्टगुणं द्वाषष्टिस्तथा सहस्राणाम् । अयुतद्वयविष्कम्भस्यासन्नो वृत्तपरिणाहः ॥",
+    iast: "caturadhikaṃ śatam aṣṭaguṇaṃ dvāṣaṣṭis tathā sahasrāṇām, ayuta-dvaya-viṣkambhasyāsanno vṛtta-pariṇāhaḥ",
+    en: "Add four to one hundred, multiply by eight, and add sixty-two thousand: this is the approximate (āsanna) circumference of a circle whose diameter is twenty thousand. That gives 62,832 ÷ 20,000 = 3.1416.",
+    tags: "aryabhata aryabhatiya pi circumference diameter approximate asanna 3.1416 499"
+  },
+  "aryabhata-boat": {
+    kind: "verse", work: "Āryabhaṭa, Āryabhaṭīya", ref: "Golapāda 9 (499 CE)",
+    sa: "अनुलोमगतिर्नौस्थः पश्यत्यचलं विलोमगं यद्वत् । अचलानि भानि तद्वत् समपश्चिमगानि लङ्कायाम् ॥",
+    iast: "anuloma-gatir nausthaḥ paśyaty acalaṃ vilomagaṃ yadvat, acalāni bhāni tadvat sama-paścima-gāni laṅkāyām",
+    en: "Just as someone in a boat moving forward sees still objects (on the shore) moving backward, so the still stars are seen at the equator moving straight westward.",
+    tags: "aryabhata earth rotation boat analogy relative motion stars move west physics astronomy"
+  },
+  "aryabhata-summary": {
+    kind: "summary", work: "Āryabhaṭa, Āryabhaṭīya", ref: "499 CE",
+    en: "Āryabhaṭa's Āryabhaṭīya, written when he was 23, covers arithmetic, algebra, trigonometry and astronomy in 121 verses. It gives π ≈ 3.1416, a table of sine differences, the idea that the Earth spins on its axis, and an explanation of eclipses as shadows cast by the Earth and Moon rather than a demon swallowing the Sun.",
+    tags: "aryabhata aryabhatiya sine table jya trigonometry astronomy eclipses shadow earth rotation 499 kusumapura"
+  },
+  "sine-word": {
+    kind: "summary", work: "The word 'sine'", ref: "history of a word",
+    en: "Indian astronomers used half-chords of a circle, called jyā or jīvā ('bowstring'). Arabic writers borrowed the word as jība. Written without vowels, it was later read as jayb, a real Arabic word meaning 'pocket' or 'fold', which was translated into Latin as sinus, which became English 'sine'.",
+    tags: "sine jya jiva bowstring arabic jiba jayb latin sinus etymology trigonometry word history"
+  },
+  "pingala-summary": {
+    kind: "summary", work: "Piṅgala, Chandaḥśāstra, and its commentators", ref: "c. 2nd century BCE onward",
+    en: "Piṅgala's study of poetic meter counts patterns of short (laghu) and long (guru) syllables, essentially a binary system. Later scholars working on meter found the triangle of numbers now called Pascal's triangle (the meru-prastāra, explained by Halāyudha in the 10th century) and the sequence 1, 2, 3, 5, 8, 13… (Virahāṅka, Gopāla, and the Jain scholar Hemacandra around 1150), well before Fibonacci.",
+    tags: "pingala chandahshastra meter prosody binary laghu guru meru prastara pascal triangle halayudha fibonacci virahanka hemacandra jain"
+  },
+  "kerala-school": {
+    kind: "summary", work: "The Kerala school of astronomy and mathematics", ref: "14th–16th century",
+    en: "Mādhava of Saṅgamagrāma (c. 1340–1425) and his successors, such as Nīlakaṇṭha (Tantrasaṅgraha, 1501) and Jyeṣṭhadeva (Yuktibhāṣā, c. 1530, in Malayalam), found infinite series for π, sine, cosine and arctangent, including π/4 = 1 − 1/3 + 1/5 − 1/7 + …, about 250 years before similar results in Europe. These are major steps toward calculus, but not the full general system of Newton and Leibniz. Whether this knowledge reached Europe is still debated.",
+    tags: "kerala school madhava sangamagrama nilakantha tantrasangraha jyesthadeva yuktibhasha infinite series pi sine cosine arctangent calculus newton leibniz"
+  },
+  "kanada-summary": {
+    kind: "summary", work: "Kaṇāda, Vaiśeṣika Sūtra", ref: "c. 2nd century BCE (dates uncertain)",
+    en: "The Vaiśeṣika school, traditionally founded by Kaṇāda, held that the physical world is made of tiny, eternal, indivisible particles (paramāṇu) that combine in pairs (dvyaṇuka) and larger groups to form everything we see. This was a philosophical theory reached by reasoning, not by experiments.",
+    tags: "kanada vaisheshika atoms paramanu dvyanuka atomism physics matter philosophy"
+  },
+  "brahmagupta-gravity": {
+    kind: "summary", work: "Brahmagupta on falling bodies, as reported by al-Bīrūnī", ref: "al-Bīrūnī's India, c. 1030",
+    en: "The Persian scholar al-Bīrūnī, who studied Indian science, reports Brahmagupta's view that heavy things fall to the Earth because it is the Earth's nature to attract and hold them. This was an important idea about attraction, but not a mathematical law of gravity like Newton's.",
+    tags: "brahmagupta gravity falling attraction earth al biruni physics newton"
+  },
+  "bhaskara-gravity": {
+    kind: "verse", work: "Bhāskara II, Siddhānta Śiromaṇi", ref: "Golādhyāya, Bhuvanakośa 6 (c. 1150; numbering varies)",
+    sa: "आकृष्टिशक्तिश्च मही तया यत् खस्थं गुरु स्वाभिमुखं स्वशक्त्या । आकृष्यते तत्पततीव भाति समे समन्तात् क्व पतत्वियं खे ॥",
+    iast: "ākṛṣṭi-śaktiś ca mahī tayā yat khasthaṃ guru svābhimukhaṃ sva-śaktyā, ākṛṣyate tat patatīva bhāti same samantāt kva patatv iyaṃ khe",
+    en: "The Earth has a power of attraction. With it, the Earth pulls a heavy object in the sky toward itself, so the object seems to fall. But where could the Earth itself fall, in space that is the same on every side?",
+    tags: "bhaskara siddhanta shiromani gravity attraction akrshti shakti falling earth space physics"
+  },
+  "iron-pillar": {
+    kind: "summary", work: "The Delhi iron pillar", ref: "c. 4th–5th century CE",
+    en: "The iron pillar now at the Qutb complex in Delhi is over 1,600 years old and about 7 meters tall, with a Sanskrit inscription naming a king 'Candra'. It has resisted rusting remarkably well. Metallurgists explain this by its high phosphorus content and a thin protective layer that formed on its surface.",
+    tags: "delhi iron pillar qutb rust resistance phosphorus passive layer metallurgy gupta chandra chemistry"
+  },
+  "wootz-zinc": {
+    kind: "summary", work: "Wootz steel and Zawar zinc", ref: "metallurgy in ancient and medieval India",
+    en: "South Indian crucible steel, known as wootz, was famous for its strength and patterns and was traded widely; it was used for 'Damascus' blades. At Zawar in Rajasthan, archaeologists found evidence of zinc being produced by distillation: zinc boils at a low temperature, so it was vaporized and collected by condensing it downward in special clay retorts, an advanced chemical technique.",
+    tags: "wootz steel crucible damascus blades zawar zinc distillation retort rajasthan metallurgy chemistry"
+  },
+  "rasashastra": {
+    kind: "summary", work: "Rasaśāstra (Indian alchemy)", ref: "medieval texts, e.g. Rasaratnasamuccaya",
+    en: "Rasaśāstra was a medieval tradition of alchemy and medicine centered on mercury (rasa) and minerals. Its practitioners developed real laboratory skills: furnaces, distillation, purification steps. But many of its preparations contain mercury, lead or arsenic, and modern testing has found dangerous levels of heavy metals in some products sold today.",
+    tags: "rasashastra alchemy mercury rasa minerals rasaratnasamuccaya distillation laboratory heavy metals safety chemistry"
+  },
+  "sushruta": {
+    kind: "summary", work: "Suśruta Saṃhitā", ref: "core text c. early centuries BCE–CE (dates debated)",
+    en: "The Suśruta Saṃhitā is a classical Sanskrit text on surgery. It describes over 100 instruments (about 101 blunt instruments and 20 sharp ones), reconstructing a nose using a flap of skin from the cheek, removing bladder stones, and treating cataracts by 'couching' (pushing the clouded lens out of the line of sight). It insists surgeons practice on models, such as fruits and leather bags, before operating.",
+    tags: "sushruta samhita surgery instruments rhinoplasty nose reconstruction cheek flap cataract couching practice models medicine"
+  },
+  "charaka": {
+    kind: "summary", work: "Caraka Saṃhitā", ref: "core text c. early centuries BCE–CE (dates debated)",
+    en: "The Caraka Saṃhitā is a classical Āyurvedic text on internal medicine. It explains health as a balance of three doṣas (vāta, pitta and kapha), stresses careful diagnosis by examining the patient, diet and lifestyle, and lays out a code of conduct for doctors: put the patient's welfare first and keep their secrets.",
+    tags: "charaka samhita ayurveda doshas vata pitta kapha diagnosis diet ethics physician oath medicine"
+  },
+  "evidence-medicine": {
+    kind: "summary", work: "How medicine is tested today", ref: "modern scientific method",
+    en: "Today a treatment is accepted when careful studies, especially randomized controlled trials comparing it with a placebo or existing treatment, show it works and is safe. Some traditional remedies have been tested this way; many have not, or have not held up. A remedy being old or natural doesn't by itself show that it works or is safe.",
+    tags: "evidence based medicine clinical trial placebo randomized test safety traditional remedy ayurveda science method"
+  },
   "tvm-1.1.1": {
     kind: "verse", work: "Nammāḻvār, Tiruvāymoḻi", ref: "1.1.1", olang: "ta",
     sa: "உயர்வற உயர்நலம் உடையவன் யவனவன் மயர்வற மதிநலம் அருளினன் யவனவன் அயர்வறும் அமரர்கள் அதிபதி யவனவன் துயரறு சுடரடி தொழுதெழென் மனனே",
