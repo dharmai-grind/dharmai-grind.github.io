@@ -327,9 +327,21 @@ DH.app = {
 
   renderAnswer: function (text) {
     var html = DH.esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+?)\*/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
-    return html.replace(/\[\[([\w.\-]+)\]\]/g, function (m, id) {
-      return DH.SOURCES[id] ? '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>" : "";
+    // Citations become tiny numbers in the text, listed as small links at the end.
+    var order = [];
+    html = html.replace(/\s*\[\[([\w.\-]+)\]\]/g, function (m, id) {
+      if (!DH.SOURCES[id]) return "";
+      if (order.indexOf(id) < 0) order.push(id);
+      return '<sup><button class="cite-num" data-src="' + id + '" aria-label="' + DH.esc(DH.cite(id)) + '">' + (order.indexOf(id) + 1) + "</button></sup>";
     });
+    if (order.length) {
+      html += '<div class="srcs">' + DH.t("Sources") + ": " + order.map(function (id, i) {
+        var s = DH.SOURCES[id];
+        var name = s.kind === "verse" ? DH.cite(id) : s.work;
+        return '<button class="src-link" data-src="' + id + '">' + (i + 1) + ". " + DH.esc(name) + "</button>";
+      }).join(" · ") + "</div>";
+    }
+    return html;
   },
 
   screen_ask: function () {

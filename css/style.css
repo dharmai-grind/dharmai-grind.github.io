@@ -203,6 +203,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .ask-title { color: var(--teal); font-weight: 900; font-size: 1.7rem; margin: 6px 0 4px; }
 .suggest { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 10px; }
 .suggest .chip { white-space: normal; }
+.cite-num { background: none; border: 0; padding: 0 1px; color: var(--purple-d); font-size: 0.72rem; font-weight: 800; }
+.srcs { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--line); font-size: 0.75rem; color: var(--muted); line-height: 1.6; }
+.src-link { background: none; border: 0; padding: 0; color: var(--purple-d); font-size: 0.75rem; text-decoration: underline; text-align: left; }
+@media (prefers-color-scheme: dark) { .cite-num, .src-link { color: var(--purple-ink); } }
 .notice { font-size: 0.78rem; color: var(--muted); padding: 6px 2px; }
 .composer { display: flex; gap: 8px; align-items: flex-end; position: sticky; bottom: 74px; background: var(--bg); padding: 6px 0; }
 .composer textarea { resize: none; border-radius: 22px; min-height: 46px; max-height: 140px; }
