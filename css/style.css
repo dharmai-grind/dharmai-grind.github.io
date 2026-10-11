@@ -181,9 +181,6 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 @keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .node-label { font-size: 0.8rem; font-weight: 700; color: var(--muted); margin-top: 10px; max-width: 140px; text-align: center; }
 .start-tag { position: absolute; top: -34px; background: var(--card); border: 2px solid var(--line); color: var(--teal); font-weight: 900; text-transform: uppercase; font-size: 0.8rem; padding: 3px 10px; border-radius: 10px; animation: bob 2s ease-in-out infinite; }
-.soon-card { display: flex; gap: 12px; align-items: center; border: 2px dashed var(--line); border-radius: 18px; padding: 14px; margin: 24px 0 8px; color: var(--muted); }
-.soon-card i { font-size: 1.8rem; color: var(--saffron); }
-.soon-card b { display: block; color: var(--ink); }
 .fab { position: fixed; right: max(16px, calc(50% - 264px)); bottom: 84px; width: 60px; height: 60px; border-radius: 50%; border: 0; background: var(--saffron); color: #fff; font-size: 1.8rem; box-shadow: 0 5px 0 var(--saffron-d); z-index: 7; }
 
 /* courses */

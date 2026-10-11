@@ -367,10 +367,7 @@ DH.app = {
         }).join("") + "</div></section>";
     }).join("");
 
-    var soon = !course.festival
-      ? '<div class="soon-card"><i class="ti ti-hourglass"></i><div><b>' + DH.t("More schools coming soon") + "</b><span>" + DH.t("Sāṃkhya, Yoga, Nyāya, Mīmāṃsā and more are on the way.") + "</span></div></div>" : "";
-
-    return chips + fest + '<div class="course-title"><h1>' + DH.t(course.title) + "</h1><p>" + DH.t(course.subtitle) + "</p></div>" + map + soon +
+    return chips + fest + '<div class="course-title"><h1>' + DH.t(course.title) + "</h1><p>" + DH.t(course.subtitle) + "</p></div>" + map +
       '<button class="fab" data-tab="ask" aria-label="Ask dharmAI"><i class="ti ti-message-circle"></i></button>';
   },
 
