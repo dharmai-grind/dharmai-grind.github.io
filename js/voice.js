@@ -87,13 +87,15 @@ DH.voice = {
     var V = "aāiīuūeēoō";
     // 1. Doubled stops stay hard: protect them first.
     w = w.replace(/ṟṟ/g, "#TR#").replace(/kk/g, "#KK#").replace(/cc/g, "#CC#").replace(/ṭṭ/g, "#TT#").replace(/tt/g, "#tt#").replace(/pp/g, "#PP#");
-    // 2. After a nasal, stops become voiced: ṅk→ng, ñc→nj, ṇṭ→nd, nt→nd, mp→mb, ṉṟ→ndr.
-    w = w.replace(/ṅk/g, "ng").replace(/ñc/g, "nj").replace(/ṇṭ/g, "nd").replace(/nt/g, "nd").replace(/mp/g, "mb").replace(/ṉṟ/g, "ndr");
-    // 3. A single stop between vowels softens: k→g, c→s, ṭ→d, t→d, p→b.
-    var soft = { "k": "g", "c": "s", "ṭ": "d", "t": "d", "p": "b" };
+    // Output stays in IAST (keeping retroflexes), so it can become Devanagari
+    // or an English respelling. 2. After a nasal, stops become voiced:
+    // ṅk→ṅg, ñc→ñj, ṇṭ→ṇḍ (retroflex), nt→nd, mp→mb, ṉṟ→ndr.
+    w = w.replace(/ṅk/g, "ṅg").replace(/ñc/g, "ñj").replace(/ṇṭ/g, "ṇḍ").replace(/nt/g, "nd").replace(/mp/g, "mb").replace(/ṉṟ/g, "ndr");
+    // 3. A single stop between vowels softens: k→g, c→s, ṭ→ḍ, t→d, p→b.
+    var soft = { "k": "g", "c": "s", "ṭ": "ḍ", "t": "d", "p": "b" };
     w = w.replace(new RegExp("([" + V + "])([kcṭtp])(?=[" + V + "])", "g"), function (m, v, s) { return v + soft[s]; });
-    // 4. Put the protected doubles back.
-    return w.replace(/#TR#/g, "ttr").replace(/#KK#/g, "kk").replace(/#CC#/g, "cch").replace(/#TT#/g, "tt").replace(/#tt#/g, "tt").replace(/#PP#/g, "pp");
+    // 4. Put the protected doubles back (hard, retroflex kept).
+    return w.replace(/#TR#/g, "ṭṭr").replace(/#KK#/g, "kk").replace(/#CC#/g, "cc").replace(/#TT#/g, "ṭṭ").replace(/#tt#/g, "tt").replace(/#PP#/g, "pp");
   },
   // Whole words with a well-known spoken form.
   SAY_AS: { "śrīperumbudūr": "Sriperumbudur", "śrīraṅgam": "Srirangam" },
@@ -106,7 +108,8 @@ DH.voice = {
       if (self.SAY_AS[lower]) return self.SAY_AS[lower];
       lower = lower.replace(/^śrī/, "shri"); // Śrī is said "Shri", not "Shree"
       if (!/[āīūṛṝḷṅṭḍṇśṣḥṃṁēōḻṟṉ]|jñ/i.test(word)) return word; // ordinary word (incl. Spanish "señor")
-      var out = self.isTamil(lower) ? self.tamilVoicing(lower) : lower.replace(/c(?!h)/g, "ch"); // in Sanskrit, c is always "ch"
+      // Sanskrit: c is always "ch". Tamil: voicing first, then any remaining c is "ch".
+      var out = (self.isTamil(lower) ? self.tamilVoicing(lower) : lower).replace(/c(?!h)/g, "ch");
       out = out.replace(/^ī/, "i").replace(/ī$/, "i"); // Īśvara → Ishvara, Purī → Puri (not "Puree")
       self.IAST_MAP.forEach(function (m) { out = out.split(m[0]).join(m[1]); });
       return self.matchCase(word, out);
@@ -115,6 +118,97 @@ DH.voice = {
   matchCase: function (orig, out) {
     return orig.charAt(0) === orig.charAt(0).toUpperCase() ? out.charAt(0).toUpperCase() + out.slice(1) : out;
   },
+  // ---- Saying Indian words with an Indian voice ----
+  // English voices give Sanskrit words English vowels ("cowboy" Rāmānuja).
+  // So inside English sentences, Sanskrit/Tamil words are converted to
+  // Devanagari and spoken by a Hindi voice, which pronounces them natively.
+
+  // Common words written without IAST marks that are really Sanskrit, with
+  // their IAST spelling (so they can be converted to Devanagari).
+  PLAIN_INDIC: {
+    vishishtadvaita: "viśiṣṭādvaita", advaita: "advaita", dvaita: "dvaita", vedanta: "vedānta", brahman: "brahman",
+    dharma: "dharma", karma: "karma", bhakti: "bhakti", moksha: "mokṣa", yoga: "yoga", veda: "veda", vedas: "veda",
+    upanishad: "upaniṣad", upanishads: "upaniṣad", bhagavad: "bhagavad", angada: "aṅgada", navaratri: "navarātri",
+    ramayana: "rāmāyaṇa", mahabharata: "mahābhārata", krishna: "kṛṣṇa", vishnu: "viṣṇu", shiva: "śiva",
+    durga: "durgā", lakshmi: "lakṣmī", saraswati: "sarasvatī", hanuman: "hanumān", sugriva: "sugrīva",
+    golu: "golu", kolu: "kolu", sundal: "suṇḍal", madhva: "madhva", ramanuja: "rāmānuja", shankara: "śaṅkara",
+    caraka: "caraka", candra: "candra", caitra: "caitra", cit: "cit", acit: "acit"
+  },
+  DEVA_CONS: {
+    "kh": "ख", "gh": "घ", "ch": "छ", "jh": "झ", "ṭh": "ठ", "ḍh": "ढ", "th": "थ", "dh": "ध", "ph": "फ", "bh": "भ",
+    "k": "क", "g": "ग", "ṅ": "ङ", "c": "च", "j": "ज", "ñ": "ञ", "ṭ": "ट", "ḍ": "ड", "ṇ": "ण",
+    "t": "त", "d": "द", "n": "न", "p": "प", "b": "ब", "m": "म", "y": "य", "r": "र", "l": "ल", "v": "व",
+    "ś": "श", "ṣ": "ष", "s": "स", "h": "ह", "ḷ": "ळ", "ḻ": "ळ", "ṟ": "र", "ṉ": "न", "f": "फ़", "z": "ज़", "w": "व"
+  },
+  DEVA_VOW: { "a": ["अ", ""], "ā": ["आ", "ा"], "i": ["इ", "ि"], "ī": ["ई", "ी"], "u": ["उ", "ु"], "ū": ["ऊ", "ू"],
+    "ṛ": ["ऋ", "ृ"], "ṝ": ["ॠ", "ॄ"], "e": ["ए", "े"], "ē": ["ए", "े"], "ai": ["ऐ", "ै"], "o": ["ओ", "ो"], "ō": ["ओ", "ो"], "au": ["औ", "ौ"] },
+  // IAST (lowercase) → Devanagari.
+  toDeva: function (w) {
+    var out = "", i = 0, prevCons = false, C = this.DEVA_CONS, V = this.DEVA_VOW;
+    while (i < w.length) {
+      var two = w.substr(i, 2), one = w.charAt(i);
+      if (V[two] || V[one]) {
+        var v = V[two] ? two : one;
+        out += prevCons ? V[v][1] : V[v][0];
+        prevCons = false; i += v.length; continue;
+      }
+      if (C[two] || C[one]) {
+        var c = C[two] ? two : one;
+        if (prevCons) out += "्";
+        out += C[c]; prevCons = true; i += c.length; continue;
+      }
+      if (one === "ṃ" || one === "ṁ") { out += "ं"; prevCons = false; i++; continue; }
+      if (one === "ḥ") { out += "ः"; prevCons = false; i++; continue; }
+      if (prevCons) out += "्";
+      out += one === "-" ? " " : one; prevCons = false; i++;
+    }
+    if (prevCons) out += "्"; // word ends in a consonant (bhagavad → भगवद्)
+    return out;
+  },
+  // The IAST form of a word if it's an Indian word, else null.
+  indicForm: function (word) {
+    var lower = word.toLowerCase().replace(/'s$/, ""); // Āṇṭāḷ's → Āṇṭāḷ
+    if (this.PLAIN_INDIC[lower]) return this.PLAIN_INDIC[lower];
+    if (this.TAMIL_WORDS.indexOf(lower) >= 0) return this.tamilVoicing(lower);
+    if (/[āīūṛṝḷṅṭḍṇśṣḥṃṁēōḻṟṉ]|jñ/.test(lower)) return this.isTamil(lower) ? this.tamilVoicing(lower) : lower;
+    return null;
+  },
+  // Split English text into English runs and runs of Indian words.
+  segments: function (text) {
+    var self = this, segs = [];
+    var push = function (t, indic) {
+      var last = segs[segs.length - 1];
+      if (last && last.indic === indic) last.text += t; else segs.push({ text: t, indic: indic });
+    };
+    String(text).split(/([A-Za-zÀ-ÿĀ-ſḀ-ỿ']+(?:-[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+)*)/).forEach(function (piece, idx) {
+      if (!piece) return;
+      if (idx % 2 === 0) {
+        // Spaces between two Indian words stay with the Indian run; punctuation ends it.
+        var last = segs[segs.length - 1];
+        if (last && last.indic && /^\s+$/.test(piece)) last.text += piece; else push(piece, false);
+        return;
+      }
+      var parts = piece.split("-"), forms = parts.map(function (p) { return self.indicForm(p); });
+      if (forms.some(function (f) { return f; })) {
+        push(parts.map(function (p, k) { return self.toDeva(forms[k] || p.toLowerCase().replace(/'s$/, "")); }).join(" "), true);
+      } else push(piece, false);
+    });
+    return segs.map(function (s) { return { text: s.text.trim(), indic: s.indic }; }).filter(function (s) { return /\S/.test(s.text) && /[\p{L}\p{N}]/u.test(s.text); });
+  },
+  // Guess a voice's gender from its name, to pair similar-sounding voices.
+  gender: function (v) {
+    var n = (v && v.name || "").toLowerCase();
+    if (/zira|aria|jenny|samantha|susan|heera|kalpana|swara|neerja|ava|allison|emma|michelle|sonia|libby|veena|lekha|female|woman|karen|moira|tessa|fiona|victoria|google hindi|google हिन्दी|google us english/.test(n)) return "f";
+    if (/david|mark|guy|ravi|hemant|madhur|prabhat|alex|daniel|tom|ryan|eric|christopher|male|man|fred|rishi|aaron/.test(n)) return "m";
+    return "";
+  },
+  hindiFor: function (englishVoice) {
+    var list = this.forLang("hi");
+    if (!list.length) return null;
+    var g = this.gender(englishVoice), self = this;
+    return (g && list.find(function (v) { return self.gender(v) === g; })) || list[0];
+  },
+
   INDIC: ["hi", "sa", "ta", "te", "kn", "ml", "mr", "gu", "bn", "pa", "or", "as", "ne", "kok", "mai", "si"],
 
   // Turn app text (markdown, citations, bullets) into something nice to hear.
@@ -152,15 +246,19 @@ DH.voice = {
       var voice = self.pick(lang);
       if (!voice) { missing = true; return; }
       var text = self.clean(p.text);
-      // Non-Indian voices (English, French...) need Sanskrit words respelled.
-      if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) < 0) text = self.respell(text);
-      self.chunks(text).forEach(function (c) {
-        var u = new SpeechSynthesisUtterance(c);
-        u.voice = voice;
-        u.lang = voice.lang;
-        u.rate = rate;
-        queue.push(u);
-      });
+      var add = function (t, v) {
+        self.chunks(t).forEach(function (c) {
+          var u = new SpeechSynthesisUtterance(c);
+          u.voice = v; u.lang = v.lang; u.rate = rate;
+          queue.push(u);
+        });
+      };
+      if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) >= 0) { add(text, voice); return; }
+      // Non-Indian voice: Indian words go to a Hindi voice (in Devanagari).
+      // Without a Hindi voice, fall back to English-friendly respelling.
+      var hindi = self.hindiFor(voice);
+      if (!hindi) { add(self.respell(text), voice); return; }
+      self.segments(text).forEach(function (s) { add(s.text, s.indic ? hindi : voice); });
     });
     if (!queue.length) {
       DH.app.toast(DH.tr("No voice for this language on your device. You can add one in your device's language or speech settings."));
