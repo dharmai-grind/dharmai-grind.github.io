@@ -57,11 +57,11 @@ DH.buildLesson = function (lesson, prefs, level) {
 // Every piece of text in a lesson, for translating up front.
 DH.LESSON_UI = ["Continue", "Check", "True", "False", "Try again", "Not quite", "Nice!", "Great job!", "Correct!",
   "Well reasoned!", "You'll see this one again at the end.", "Pick an answer first", "Tap a pair to match them",
-  "Place every item first", "Correct order:", "Think about it", "Ask dharmAI after the lesson", "My thoughts:",
+  "Place every item first", "Correct order:", "Think about it", "Ask DHARMAi after the lesson", "My thoughts:",
   "Write your thoughts (optional, stays on your device)", "Mini debate", "Skip", "Save to my debates",
   "Pick a side first", "Pick the side you want to defend.", "Pick a side to start with. You'll argue both.",
   "Angada assigned you a side. You don't have to agree with it!", "Lesson complete!", "XP", "Accuracy", "Streak",
-  "You saved these for dharmAI:", "Machine translated", "Summary, not a quote", "Tradition",
+  "You saved these for DHARMAi:", "Machine translated", "Summary, not a quote", "Tradition",
   "Quit this lesson? Your progress in it won't be saved."];
 DH.lessonStrings = function (cards) {
   var out = DH.LESSON_UI.slice();
@@ -341,7 +341,7 @@ DH.Lesson.prototype.view_reflect = function (c) {
 };
 DH.Lesson.prototype.bind_reflect = function (c) {
   var self = this;
-  self.foot('<button class="btn" id="later"><i class="ti ti-message-circle"></i> ' + DH.t("Ask dharmAI after the lesson") + "</button>" +
+  self.foot('<button class="btn" id="later"><i class="ti ti-message-circle"></i> ' + DH.t("Ask DHARMAi after the lesson") + "</button>" +
     '<button class="btn primary" id="cont">' + DH.t("Continue") + "</button>");
   document.getElementById("later").onclick = function () {
     var mine = document.getElementById("refl").value.trim();
@@ -416,7 +416,7 @@ DH.Lesson.prototype.finish = function () {
     '<div class="stats"><div class="stat xp"><span>' + DH.t("XP") + "</span><b>+" + self.xp + "</b></div>" +
     '<div class="stat acc"><span>' + DH.t("Accuracy") + "</span><b>" + acc + "%</b></div>" +
     '<div class="stat fire"><span>' + DH.t("Streak") + '</span><b><i class="ti ti-flame"></i> ' + st.streak + "</b></div></div>" +
-    (self.later.length ? '<div class="later"><p>' + DH.t("You saved these for dharmAI:") + "</p>" +
+    (self.later.length ? '<div class="later"><p>' + DH.t("You saved these for DHARMAi:") + "</p>" +
       self.later.map(function (l, i) {
         return '<button class="btn" data-l="' + i + '"><i class="ti ti-' + (l.mode === "debate" ? "swords" : "message-circle") + '"></i> ' + DH.esc(l.label) + "</button>";
       }).join("") + "</div>" : "") +

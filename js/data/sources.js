@@ -2,7 +2,7 @@
 // Any classical language is welcome (Sanskrit, Tamil, Hindi/Awadhi, Telugu,
 // Kannada...) as long as it's relevant to what the learner is studying.
 // kind "verse": original text (sa = original script, olang = its language code,
-//   default "sa"; iast = romanized) + a dharmAI translation (en).
+//   default "sa"; iast = romanized) + a DHARMAi translation (en).
 //   Translations are our own plain-English renderings.
 // kind "summary": a short summary of a work's position. NOT a quotation.
 // kind "tradition": a practice or story passed down in communities, not from one text.

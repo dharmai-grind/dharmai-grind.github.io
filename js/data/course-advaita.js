@@ -30,7 +30,7 @@ DH.COURSES.advaita = {
           cards: [
             { t: "teach", title: "The question", body: "How is the individual self (jīva) related to Brahman? Three famous answers:" },
             { t: "teach", title: "Advaita: not two", body: "Śaṅkara: the self is ultimately identical with Brahman. The world of many separate things appears through māyā. 'Advaita' means 'not two': non-dualism. That's this course!", src: "advaita-summary" },
-            { t: "teach", title: "The other two", body: "• Vishishtadvaita (Rāmānuja): one Brahman, with real selves and matter as its body\n• Dvaita (Madhva): God, selves and matter are eternally different\ndharmAI has courses for both." },
+            { t: "teach", title: "The other two", body: "• Vishishtadvaita (Rāmānuja): one Brahman, with real selves and matter as its body\n• Dvaita (Madhva): God, selves and matter are eternally different\nDHARMAi has courses for both." },
             { t: "match", tag: "core", q: "Match the school to its founder", pairs: [["Advaita", "Śaṅkara"], ["Vishishtadvaita", "Rāmānuja"], ["Dvaita", "Madhva"]] },
             { t: "mcq", tag: "core", q: "'Advaita' literally means...", opts: ["Not two", "Two", "Qualified", "Devotion"], a: 0, why: "a (not) + dvaita (two-ness)." },
             { t: "mcq", tag: "think", q: "Which statement would an Advaitin agree with?", opts: ["Your deepest self and Brahman are ultimately one", "You are a body that God controls", "God and you are forever two", "There is no ultimate reality"], a: 0, why: "Identity of self and Brahman is the heart of Advaita." },

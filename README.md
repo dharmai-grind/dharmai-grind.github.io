@@ -1,4 +1,4 @@
-# dharmAI
+# DHARMAi
 
 Bite-sized, Duolingo-style lessons on Hindu philosophy, history, texts and festivals,
 with Angada the vānara and an AI tutor that cites its sources.

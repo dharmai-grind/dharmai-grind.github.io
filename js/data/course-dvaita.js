@@ -30,7 +30,7 @@ DH.COURSES.dvaita = {
           cards: [
             { t: "teach", title: "The question", body: "How is the individual self (jīva) related to Brahman? Three famous answers:" },
             { t: "teach", title: "Dvaita: really different", body: "Madhva: God, selves and matter are eternally, really different. Selves depend on God completely, but are never God. 'Dvaita' means 'two-ness', or dualism. That's this course!", src: "dvaita-summary" },
-            { t: "teach", title: "The other two", body: "• Advaita (Śaṅkara): the self is ultimately identical with Brahman\n• Vishishtadvaita (Rāmānuja): one Brahman, with real selves and matter as its body\ndharmAI has courses for both." },
+            { t: "teach", title: "The other two", body: "• Advaita (Śaṅkara): the self is ultimately identical with Brahman\n• Vishishtadvaita (Rāmānuja): one Brahman, with real selves and matter as its body\nDHARMAi has courses for both." },
             { t: "match", tag: "core", q: "Match the school to its founder", pairs: [["Advaita", "Śaṅkara"], ["Vishishtadvaita", "Rāmānuja"], ["Dvaita", "Madhva"]] },
             { t: "mcq", tag: "core", q: "'Dvaita' literally means...", opts: ["Two-ness (dualism)", "Not two", "Qualified", "Surrender"], a: 0, why: "dvi = two." },
             { t: "mcq", tag: "think", q: "Which statement would a Dvaitin agree with?", opts: ["You depend on God completely, but you will never be God", "You are secretly God", "God is your body", "There is no God"], a: 0, why: "Real, eternal difference with total dependence." },

@@ -93,7 +93,7 @@ DH.app = {
     }
     if (name === "tradition") {
       body = "<h1>" + t("Any particular tradition or background?") + "</h1>" +
-        "<p>" + t("Optional. Type a tradition, sampradāya, region or family practice, and dharmAI will look for relevant texts and commentaries. You can also leave this blank.") + "</p>" +
+        "<p>" + t("Optional. Type a tradition, sampradāya, region or family practice, and DHARMAi will look for relevant texts and commentaries. You can also leave this blank.") + "</p>" +
         '<input id="trad" maxlength="120" placeholder="' + DH.esc(DH.tr("Vadakalai Śrīvaiṣṇava, Smārta, Tamil family traditions...")) + '" value="' + DH.esc(draft.tradition || "") + '">' +
         '<p class="small">' + t("Don't include your name or other personal details.") + "</p>";
     }
@@ -106,10 +106,10 @@ DH.app = {
           return '<button class="opt lang ' + (cur === l.code ? "sel" : "") + '" data-code="' + l.code + '" data-n="' + DH.esc((l.name + " " + l.native).toLowerCase()) + '">' +
             '<b dir="auto">' + DH.esc(l.native) + "</b><small>" + DH.esc(l.name) + "</small></button>";
         }).join("") + "</div>" +
-        (DH.ai.configured() ? "" : '<p class="small warn">' + t("Translation switches on once dharmAI's AI is connected. Until then, everything shows in English.") + "</p>");
+        (DH.ai.configured() ? "" : '<p class="small warn">' + t("Translation switches on once DHARMAi's AI is connected. Until then, everything shows in English.") + "</p>");
     }
     if (name === "length") {
-      body = "<h1>" + t("How long should lessons be?") + "</h1><p>" + t("dharmAI shapes every lesson to fit.") + '</p><div class="opts">' +
+      body = "<h1>" + t("How long should lessons be?") + "</h1><p>" + t("DHARMAi shapes every lesson to fit.") + '</p><div class="opts">' +
         choice("length", "short", "About 2 minutes", "Key ideas, a few quick questions") +
         choice("length", "medium", "About 5 minutes", "The full lesson") +
         choice("length", "long", "10 minutes or more", "Extra deep-dive cards and every question") +
@@ -256,7 +256,7 @@ DH.app = {
       }).catch(function (ex) {
         btn.disabled = false;
         btn.textContent = DH.tr(mode === "login" ? "Log in" : mode === "signup" ? "Create account" : "Reset password");
-        err(DH.tr(ex.message === "Failed to fetch" ? "Couldn't reach dharmAI. Check your internet and try again." : ex.message));
+        err(DH.tr(ex.message === "Failed to fetch" ? "Couldn't reach DHARMAi. Check your internet and try again." : ex.message));
       });
     };
   },
@@ -327,7 +327,7 @@ DH.app = {
     wrap.innerHTML = '<div class="sheet"><button class="icon-btn close" aria-label="Close"><i class="ti ti-x"></i></button>' +
       "<h2>" + DH.esc(DH.cite(id)) + "</h2>" +
       DH.sourceBox(id).replace(/<button[\s\S]*<\/button>/, "") +
-      '<p class="small">' + DH.t(s.kind === "verse" ? "Original text with a dharmAI translation." : s.kind === "summary" ? "This is a summary of the work's position, not a direct quote." : "This describes a living tradition; practice varies by region and family.") + "</p></div>";
+      '<p class="small">' + DH.t(s.kind === "verse" ? "Original text with a DHARMAi translation." : s.kind === "summary" ? "This is a summary of the work's position, not a direct quote." : "This describes a living tradition; practice varies by region and family.") + "</p></div>";
     document.body.appendChild(wrap);
     var close = function () { wrap.remove(); };
     wrap.onclick = function (e) { if (e.target === wrap) close(); };
@@ -371,7 +371,7 @@ DH.app = {
     }).join("");
 
     return chips + fest + '<div class="course-title"><h1>' + DH.t(course.title) + "</h1><p>" + DH.t(course.subtitle) + "</p></div>" + map +
-      '<button class="fab" data-tab="ask" aria-label="Ask dharmAI"><i class="ti ti-message-circle"></i></button>';
+      '<button class="fab" data-tab="ask" aria-label="Ask DHARMAi"><i class="ti ti-message-circle"></i></button>';
   },
 
   bind_learn: function () {
@@ -499,7 +499,7 @@ DH.app = {
   bubble: function (m) {
     if (m.role === "user") return '<div class="msg user" dir="auto">' + DH.esc(m.text).replace(/\n/g, "<br>") + "</div>";
     var body = m.offline
-      ? "<p>" + DH.t("dharmAI's AI isn't connected yet, so here are the passages in our library that best match:") + "</p>" +
+      ? "<p>" + DH.t("DHARMAi's AI isn't connected yet, so here are the passages in our library that best match:") + "</p>" +
         (m.ids.length ? m.ids.map(function (id) { return '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>"; }).join(" ")
           : "<p>" + DH.t("Nothing in the library matched. Try other words.") + "</p>")
       : m.error ? '<p class="err">' + DH.esc(m.text) + "</p>" : '<div dir="auto">' + this.renderAnswer(m.text) + "</div>";
@@ -518,7 +518,7 @@ DH.app = {
   },
 
   aiError: function () {
-    return DH.tr("dharmAI couldn't answer right now (the free AI may be busy). Try again in a minute.");
+    return DH.tr("DHARMAi couldn't answer right now (the free AI may be busy). Try again in a minute.");
   },
 
   // The AI sometimes writes math in LaTeX ($\pi/4$). Turn it into plain symbols.
@@ -798,7 +798,7 @@ DH.app = {
       self.go("debate");
       self.showTyping();
       DH.ai.debate({ topic: d.topic, side: d.side, history: history(), action: "summary" }).then(function (r) {
-        d.summary = r.offline ? DH.tr("Summaries need dharmAI's AI to be connected.") : r.text;
+        d.summary = r.offline ? DH.tr("Summaries need DHARMAi's AI to be connected.") : r.text;
       }).catch(function () {
         d.msgs.push({ role: "bot", error: true, text: self.aiError() });
       }).then(function () {
@@ -851,7 +851,7 @@ DH.app = {
           }).join("");
       })() +
       '<p class="small" id="saved"></p>' +
-      "<h2>" + t("About dharmAI") + "</h2><p>" + t("dharmAI teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
+      "<h2>" + t("About DHARMAi") + "</h2><p>" + t("DHARMAi teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
       "<h2>" + t("Privacy") + "</h2><p class=\"small\">" + t("Accounts need only a username and password. Passwords are stored scrambled, so nobody can read them. Your progress and chats are stored to sync your account; don't put personal information in them.") + "</p>" +
       '<div class="danger-zone"><button class="btn danger small" id="reset"><i class="ti ti-refresh"></i> ' + t("Reset all progress") + "</button>" +
       (acc ? '<button class="btn danger small" id="delAcc"><i class="ti ti-trash"></i> ' + t("Delete my account") + "</button>" : "") + "</div>";

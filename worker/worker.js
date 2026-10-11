@@ -1,4 +1,4 @@
-// dharmAI Worker (runs free on Cloudflare Workers).
+// DHARMAi Worker (runs free on Cloudflare Workers).
 //
 // AI (Cloudflare Workers AI, no outside API key):
 //   POST /ask        tutor answer, citing only the passages sent with it
@@ -144,7 +144,7 @@ ACCURACY ABOUT SCIENCE HISTORY: credit real, documented achievements (zero, plac
 SOURCES (very important):
 - Below is a LIBRARY of passages. Cite a passage by writing its id in double square brackets exactly as given, e.g. [[bg-2.13]], right after the sentence it supports.
 - NEVER invent a citation or verse number. Only cite ids from the library. Classical sources in any language (Sanskrit, Tamil, Hindi/Awadhi, Telugu, etc.) are welcome when relevant.
-- If the library doesn't cover something, you may still use general knowledge, but say plainly it isn't from dharmAI's source library, and don't present it as a quote.
+- If the library doesn't cover something, you may still use general knowledge, but say plainly it isn't from DHARMAi's source library, and don't present it as a quote.
 - Distinguish clearly between (a) what a text says, (b) how a school or teacher interprets it, and (c) regional or family practice.
 - When schools disagree (e.g. Advaita, Vishishtadvaita, Dvaita), represent each fairly. Never declare one the correct Hindu view.
 
@@ -154,7 +154,7 @@ SAFETY: Be respectful of all traditions and of other religions. For questions ab
 
 async function ask(body, env) {
   const p = body.profile || {};
-  const system = `You are dharmAI's tutor, voiced by Angada, a friendly young vānara from the Rāmāyaṇa. You explain Hindu philosophy, history, texts and festivals, and the history of science in ancient and medieval India, to learners from kids to adults with short attention spans. Learner prefers: ${clip(p.focus, 20)} (think = reasoning and comparing views, trivia = facts and stories, both = a mix).
+  const system = `You are DHARMAi's tutor, voiced by Angada, a friendly young vānara from the Rāmāyaṇa. You explain Hindu philosophy, history, texts and festivals, and the history of science in ancient and medieval India, to learners from kids to adults with short attention spans. Learner prefers: ${clip(p.focus, 20)} (think = reasoning and comparing views, trivia = facts and stories, both = a mix).
 
 ${common(p)}
 
@@ -176,7 +176,7 @@ async function debate(body, env) {
   const summary = body.action === "summary";
 
   const system = summary
-    ? `You are the fair judge at the end of a friendly philosophy debate on dharmAI.
+    ? `You are the fair judge at the end of a friendly philosophy debate on DHARMAi.
 Debate question: "${topic}". The learner defended: "${side}".
 
 ${common(p)}
@@ -189,7 +189,7 @@ No winner, no score, no judgment of the learner's beliefs. Cite library passages
 
 LIBRARY:
 ${library(body)}`
-    : `You are Angada, a friendly young vānara from the Rāmāyaṇa, acting as a respectful debate partner on dharmAI.
+    : `You are Angada, a friendly young vānara from the Rāmāyaṇa, acting as a respectful debate partner on DHARMAi.
 Debate question: "${topic}". The learner is defending: "${side}". You argue the OPPOSING view${swap ? ", but the learner wants to practice both sides: after about three exchanges, offer to swap sides" : ""}.
 
 ${common(p)}

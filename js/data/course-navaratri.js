@@ -33,7 +33,7 @@ DH.COURSES.navaratri = {
             { t: "teach", title: "Learning begins", body: "In Kerala and elsewhere, Vijayadaśamī is the day for Vidyārambham: small children write their first letters, often in a plate of rice." },
             { t: "match", tag: "core", q: "Match the region to its tradition", pairs: [["Bengal", "Durgā Pūjā"], ["Gujarat", "Garbā and Daṇḍiyā"], ["Tamil Nadu", "Golu"], ["Telangana", "Bathukamma"]] },
             { t: "mcq", tag: "trivia", q: "On Vijayadaśamī in Kerala, young children often...", opts: ["Write their first letters (Vidyārambham)", "Fly kites", "Burn effigies", "Throw colored powder"], a: 0, why: "Vidyā = learning, ārambham = beginning." },
-            { t: "mcq", tag: "think", q: "One festival, celebrated so differently. What does that suggest about Hindu traditions?", opts: ["They grow from shared texts AND local culture, so practice varies a lot", "Only one region does it correctly", "The festival has no meaning", "Everyone copied Bengal"], a: 0, why: "Shared roots, many branches. That's why dharmAI marks regional customs separately from texts." },
+            { t: "mcq", tag: "think", q: "One festival, celebrated so differently. What does that suggest about Hindu traditions?", opts: ["They grow from shared texts AND local culture, so practice varies a lot", "Only one region does it correctly", "The festival has no meaning", "Everyone copied Bengal"], a: 0, why: "Shared roots, many branches. That's why DHARMAi marks regional customs separately from texts." },
             { t: "reflect", q: "How does YOUR family celebrate Navarātri, if it does? What's one thing you'd like to know the reason for?" }
           ]
         },
