@@ -22,7 +22,7 @@ DH.COURSES.navaratri = {
             { t: "teach", title: "Three times three", body: "In many South Indian homes the nine nights are grouped in threes: Durgā (strength), Lakṣmī (prosperity), then Sarasvatī (learning). In much of North India, each night honors one of nine forms of Durgā (Navadurgā). Customs vary." },
             { t: "mcq", tag: "core", q: "What does 'Navarātri' mean?", opts: ["Nine nights", "New moon", "Nine gods", "Night of lamps"], a: 0, why: "nava = nine, rātri = night." },
             { t: "order", tag: "core", q: "In the common South Indian grouping, put the goddesses in order of the nights", items: ["Durgā", "Lakṣmī", "Sarasvatī"] },
-            { t: "tf", tag: "trivia", q: "The tenth day after Navarātri is called Vijayadaśamī.", a: true, why: "vijaya = victory, daśamī = tenth day." },
+            { t: "tf", tag: "trivia", q: "The tenth day, right after the nine nights, is called Vijayadaśamī.", a: true, why: "vijaya = victory, daśamī = tenth day." },
             { t: "mcq", tag: "think", q: "Why might the nights move from strength (Durgā) to prosperity (Lakṣmī) to learning (Sarasvatī)?", opts: ["One popular reading: first remove what's harmful, then build what's good, then gain wisdom", "Alphabetical order", "It's random", "Because Sarasvatī is the youngest"], a: 0, why: "That's a common interpretation, not the only one. Can you think of another?" }
           ]
         },
@@ -71,12 +71,12 @@ DH.COURSES.navaratri = {
           id: "n2-2", title: "Three battles",
           cards: [
             { t: "teach", title: "Madhu and Kaiṭabha", body: "First story: while Viṣṇu sleeps on the cosmic ocean, two demons, Madhu and Kaiṭabha, threaten Brahmā. The Goddess, as the power of sleep (Yoganidrā), withdraws from Viṣṇu so he can wake and defeat them." },
-            { t: "teach", title: "Mahiṣāsura", body: "Second story: the buffalo demon Mahiṣāsura conquers the gods. Their combined radiance and powers come together as the Goddess, who defeats him. That's why she's called Mahiṣāsuramardinī." },
+            { t: "teach", title: "Mahiṣāsura", body: "Second story: the buffalo demon Mahiṣāsura conquers the gods. Their combined radiance and powers come together as the Goddess, who defeats him. That's why she's called Mahiṣāsuramardinī. Yet the text's own hymns praise her as the power behind everything, present in all beings, so she's more than just the sum of the gods." },
             { t: "teach", title: "Śumbha and Niśumbha", body: "Third story: the demon brothers Śumbha and Niśumbha. In this part, the fierce Kālī appears, defeats Caṇḍa and Muṇḍa (becoming Cāmuṇḍā), and swallows the blood of Raktabīja, a demon whose every drop of blood spawned a copy of himself.", src: "devi-mahatmya-summary" },
             { t: "order", tag: "core", q: "Put the three stories in the order they appear", items: ["Madhu and Kaiṭabha", "Mahiṣāsura", "Śumbha and Niśumbha"] },
             { t: "mcq", tag: "trivia", q: "Which demon multiplied from every drop of his blood?", opts: ["Raktabīja", "Mahiṣāsura", "Madhu", "Rāvaṇa"], a: 0, why: "rakta = blood, bīja = seed." },
             { t: "mcq", tag: "think", q: "Raktabīja keeps multiplying when struck. Many readers treat him as a symbol. Of what, most plausibly?", opts: ["Desires or bad habits that multiply when fought the wrong way", "Rain", "Kingdoms", "Numbers"], a: 0, why: "A popular interpretation, not stated in the text itself. Notice the difference between what a text SAYS and how people READ it." },
-            { t: "mcq", tag: "think", q: "In the Mahiṣāsura story, the Goddess forms from all the gods' powers combined. Yet the hymns call her the source of everything. How can both be true?", opts: ["Many readers say her 'emergence' is a manifestation of a power that was always there, not a creation", "They can't; the text is wrong", "The gods are lying", "It's a translation error"], a: 0, why: "A real puzzle worth thinking about! Different traditions answer it differently." }
+            { t: "mcq", tag: "think", q: "In the Mahiṣāsura story, the Goddess forms from all the gods' powers combined. Yet the hymns praise her as the power behind everything. How can both be true?", opts: ["Many readers say her 'emergence' is a manifestation of a power that was always there, not a creation", "They can't; the text is wrong", "The gods are lying", "It's a translation error"], a: 0, why: "A real puzzle worth thinking about! Different traditions answer it differently." }
           ]
         }
       ]

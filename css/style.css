@@ -162,6 +162,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .unit-head b { display: block; font-size: 1.15rem; }
 .unit-head span { font-size: 0.88rem; opacity: 0.92; }
 .unit-head.teal { background: var(--teal); } .unit-head.pink { background: var(--pink); }
+.unit-head.purple { background: var(--purple); } .unit-head.blue { background: var(--blue); }
+.node.done.purple, .node.current.purple { background: var(--purple); }
+.node.done.blue, .node.current.blue { background: var(--blue); }
+.chip.on.purple { background: var(--purple-l); border-color: var(--purple); color: var(--purple-ink); }
+.chip.on.blue { background: var(--blue-l); border-color: var(--blue); color: var(--blue-ink); }
+.note { background: var(--blue-l); color: var(--blue-ink); border-radius: 14px; padding: 10px 12px; font-size: 0.9rem; font-weight: 700; margin: 6px 0 4px; }
+.or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 800; text-transform: uppercase; font-size: 0.8rem; margin: 18px 0 0; }
+.or::before, .or::after { content: ""; flex: 1; height: 2px; background: var(--line); }
 .path { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 22px 0 8px; }
 .node-wrap { display: flex; flex-direction: column; align-items: center; position: relative; }
 .node { width: 74px; height: 70px; border-radius: 50%; border: 0; font-size: 2rem; color: #fff; display: flex; align-items: center; justify-content: center; box-shadow: 0 7px 0 rgba(0,0,0,0.2); }
@@ -221,6 +229,12 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .summary-card { border: 2px solid var(--teal); border-radius: 18px; padding: 12px 14px; background: var(--teal-l); }
 .sum-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: var(--teal-ink); }
 .debate-setup .opts { margin-bottom: 8px; }
+.saved-list { display: flex; flex-direction: column; gap: 8px; }
+.saved-row { display: flex; align-items: center; gap: 8px; border: 2px solid var(--saffron); background: var(--saffron-l); border-radius: 14px; padding: 10px 8px 10px 12px; }
+.saved-main { flex: 1; min-width: 0; }
+.saved-main b { display: block; font-size: 0.92rem; line-height: 1.35; }
+.saved-main span { font-size: 0.8rem; color: var(--saffron-ink); }
+.saved-row .btn.small { margin-top: 0; }
 .debate-setup .btn.wide { width: 100%; max-width: none; margin-top: 12px; }
 
 /* accounts */

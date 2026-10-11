@@ -69,14 +69,24 @@ DH.app = {
         (DH.ai.configured() ? '<button class="btn wide" id="haveAcc">' + t("I already have an account") + "</button>" : "") + "</div>";
     }
     if (name === "school") {
-      body = "<h1>" + t("Which school would you like to explore?") + "</h1>" +
-        '<div class="opts">' +
-        choice("school", "vishishtadvaita", "Vishishtadvaita Vedanta", "Rāmānuja: one reality, with real selves and world as its body") +
-        choice("school", "explore", "I'm new. Help me explore!", "Starts with Vishishtadvaita, whose first unit compares all three schools") +
-        DH.CATALOG.filter(function (c) { return c.kind === "school" && c.status === "soon"; }).map(function (c) {
-          return '<button class="opt big soon" data-soon="1" disabled><b>' + t(c.title) + ' <span class="pill soon-pill">' + t("Coming soon") + "</span></b><small>" + t(c.blurb) + "</small></button>";
-        }).join("") +
-        "</div>";
+      // One pick to start: a school OR a festival. More can be added later.
+      var group = function (kind) {
+        return DH.CATALOG.filter(function (c) { return c.kind === kind; }).map(function (c) {
+          if (c.status === "soon") {
+            return '<button class="opt big soon" disabled><b>' + t(c.title) + ' <span class="pill soon-pill">' + t("Coming soon") + "</span></b><small>" + t(c.blurb) + "</small></button>";
+          }
+          var badge = kind === "festival" && self.festivalOn() ? ' <span class="pill pink">' + t("Happening now") + "</span>" : "";
+          return '<button class="opt big ' + (draft.start === c.id ? "sel" : "") + '" data-k="start" data-v="' + c.id + '"><b>' + t(c.title) + badge + "</b><small>" + t(c.blurb) + "</small></button>";
+        }).join("");
+      };
+      body = "<h1>" + t("What would you like to learn first?") + "</h1>" +
+        '<div class="note"><i class="ti ti-info-circle"></i> ' + t("You can take several courses at the same time. Choose one to start; you can add more anytime from Courses.") + "</div>" +
+        "<h2>" + t("A philosophical school") + "</h2>" +
+        '<p class="small">' + t("Not sure? Each school's first unit compares all three, so any is a good start.") + "</p>" +
+        '<div class="opts">' + group("school") + "</div>" +
+        '<div class="or"><span>' + t("or") + "</span></div>" +
+        "<h2>" + t("A festival") + "</h2>" +
+        '<div class="opts">' + group("festival") + "</div>";
     }
     if (name === "tradition") {
       body = "<h1>" + t("Any particular tradition or background?") + "</h1>" +
@@ -152,7 +162,7 @@ DH.app = {
       });
     }
     document.getElementById("next").onclick = function () {
-      if (name === "school" && !draft.school) return err("Pick a school to continue");
+      if (name === "school" && !draft.start) return err("Pick a school or a festival to continue");
       if (name === "tradition") draft.tradition = document.getElementById("trad").value.trim();
       if (name === "language") draft.lang = draft.lang || "en";
       if (name === "length" && !draft.length) return err("Pick a lesson length");
@@ -169,14 +179,16 @@ DH.app = {
 
   finishOnboarding: function (draft) {
     var st = DH.store.state;
+    var start = DH.COURSES[draft.start] ? draft.start : "vishishtadvaita";
+    var isSchool = !DH.COURSES[start].festival;
     st.prefs = {
-      school: "vishishtadvaita", explore: draft.school === "explore",
+      // "school" tells the AI which school the learner is studying (if any).
+      school: isSchool ? start : "",
       tradition: draft.tradition || "", lang: draft.lang || "en",
       length: draft.length, focus: draft.focus, debate: draft.debate
     };
-    if (st.courses.indexOf("vishishtadvaita") < 0) st.courses.push("vishishtadvaita");
-    if (this.festivalOn() && st.courses.indexOf("navaratri") < 0) st.courses.push("navaratri");
-    st.active = "vishishtadvaita";
+    if (st.courses.indexOf(start) < 0) st.courses.push(start);
+    st.active = start;
     DH.store.save();
     this.applyDir();
     this.go("learn");
@@ -355,8 +367,8 @@ DH.app = {
         }).join("") + "</div></section>";
     }).join("");
 
-    var soon = course.id === "vishishtadvaita"
-      ? '<div class="soon-card"><i class="ti ti-hourglass"></i><div><b>' + DH.t("Advaita and Dvaita are coming soon") + "</b><span>" + DH.t("Full courses for Śaṅkara's and Madhva's schools are on the way.") + "</span></div></div>" : "";
+    var soon = !course.festival
+      ? '<div class="soon-card"><i class="ti ti-hourglass"></i><div><b>' + DH.t("More schools coming soon") + "</b><span>" + DH.t("Sāṃkhya, Yoga, Nyāya, Mīmāṃsā and more are on the way.") + "</span></div></div>" : "";
 
     return chips + fest + '<div class="course-title"><h1>' + DH.t(course.title) + "</h1><p>" + DH.t(course.subtitle) + "</p></div>" + map + soon +
       '<button class="fab" data-tab="ask" aria-label="Ask dharmAI"><i class="ti ti-message-circle"></i></button>';
@@ -430,9 +442,7 @@ DH.app = {
   // From the end of a lesson: a saved question goes to Ask, a saved debate starts a Debate.
   openAsk: function (item) {
     if (item.mode === "debate") {
-      DH.store.state.debate = { topic: item.q, side: item.side, sides: item.sides || [], msgs: [], summary: null };
-      DH.store.save();
-      this.go("debate");
+      this.startDebate(item.q, item.side);
       return;
     }
     this.pendingQuestion = item.q;
@@ -542,6 +552,15 @@ DH.app = {
   },
 
   // ---------- Debate ----------
+  // Start a debate; if it was in "Saved debates", take it off the list.
+  startDebate: function (topic, side) {
+    var st = DH.store.state;
+    st.savedDebates = (st.savedDebates || []).filter(function (d) { return !(d.topic === topic && d.side === side); });
+    st.debate = { topic: topic, side: side, msgs: [], summary: null };
+    this.debateDraft = null;
+    DH.store.save();
+    this.go("debate");
+  },
   // Debate topics from lessons the learner has finished (plus a few starters).
   debateTopics: function () {
     var st = DH.store.state, out = [];
@@ -584,9 +603,20 @@ DH.app = {
       } else if (draft.custom) {
         sidesHtml = '<label class="field"><span>' + t("Your position") + '</span><input id="dSide" maxlength="200" value="' + DH.esc(draft.side || "") + '" placeholder="' + DH.esc(DH.tr("The self is truly distinct from God")) + '"></label>';
       }
+      var saved = st.savedDebates || [];
+      var savedHtml = saved.length
+        ? "<h2>" + t("Saved debates") + ' <span class="pill">' + saved.length + "</span></h2>" +
+          '<div class="saved-list">' + saved.map(function (s, i) {
+            return '<div class="saved-row"><div class="saved-main"><b>' + DH.esc(s.topic) + "</b><span>" + t("Your side:") + " " + DH.esc(s.side) +
+              (s.from ? " · " + t("from") + " " + DH.esc(s.from) : "") + "</span></div>" +
+              '<button class="btn primary small" data-saved-start="' + i + '">' + t("Start") + "</button>" +
+              '<button class="icon-btn" data-saved-del="' + i + '" aria-label="' + DH.esc(DH.tr("Remove")) + '"><i class="ti ti-x"></i></button></div>';
+          }).join("") + '</div><div class="or"><span>' + t("or start a new one") + "</span></div>"
+        : "";
       return '<div class="debate-setup">' +
         '<div class="ask-empty">' + DH.angada(100, "cheer") + '<h1 class="ask-title">' + t("Debate Angada") + "</h1><p>" +
         t("Pick a question and a side. Angada argues the other side, one point at a time. He challenges arguments, never you.") + "</p></div>" +
+        savedHtml +
         (p.debate === "none" ? '<p class="small">' + t("You chose 'no debates' for lessons, but you can still debate here any time.") + "</p>" : "") +
         "<h2>" + t("1. Pick a question") + '</h2><div class="opts">' +
         topics.map(function (x) { return '<button class="opt ' + (draft.topic === x.q ? "sel" : "") + '" data-topic="' + DH.esc(x.q) + '">' + t(x.q) + "</button>"; }).join("") +
@@ -610,7 +640,8 @@ DH.app = {
         ? '<button class="btn primary wide" id="newDeb"><i class="ti ti-plus"></i> ' + t("New debate") + "</button>"
         : '<div class="notice"><i class="ti ti-info-circle"></i> ' + t("Answers can be wrong. Check the cited sources.") +
           (d.msgs.length >= 2 ? ' <button class="link" id="endDeb">' + t("End debate and see summary") + "</button>" : "") +
-          ' <button class="link" id="quitDeb">' + t("Change topic") + "</button></div>" +
+          ' <button class="link" id="quitDeb">' + t("Change topic") +
+          ((st.savedDebates || []).length ? " (" + st.savedDebates.length + " " + t("saved") + ")" : "") + "</button></div>" +
           '<form class="composer" id="composer"><textarea id="q" rows="1" maxlength="1000" placeholder="' + DH.esc(DH.tr(d.msgs.length ? "Your reply..." : "Your opening argument...")) + '" dir="auto"></textarea>' +
           '<button class="send" aria-label="Send"><i class="ti ti-send"></i></button></form><div class="err" id="err"></div>') +
       "</div>";
@@ -624,6 +655,19 @@ DH.app = {
       self.debateDraft = self.debateDraft || {};
       var draft = self.debateDraft;
       var topics = self.debateTopics();
+      document.querySelectorAll("[data-saved-start]").forEach(function (b) {
+        b.onclick = function () {
+          var s = st.savedDebates[+b.dataset.savedStart];
+          if (s) self.startDebate(s.topic, s.side);
+        };
+      });
+      document.querySelectorAll("[data-saved-del]").forEach(function (b) {
+        b.onclick = function () {
+          st.savedDebates.splice(+b.dataset.savedDel, 1);
+          DH.store.save();
+          self.go("debate");
+        };
+      });
       document.querySelectorAll("[data-topic]").forEach(function (b) {
         b.onclick = function () { self.debateDraft = { topic: b.dataset.topic }; self.go("debate"); };
       });
@@ -649,10 +693,7 @@ DH.app = {
           if (p.debate === "assign") draft.side = picked.sides[Math.floor(Math.random() * picked.sides.length)];
           if (!draft.side) return err("Pick a side first");
         }
-        st.debate = { topic: draft.topic, side: draft.side, msgs: [], summary: null };
-        self.debateDraft = null;
-        DH.store.save();
-        self.go("debate");
+        self.startDebate(draft.topic, draft.side);
       };
       return;
     }

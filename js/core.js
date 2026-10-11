@@ -30,6 +30,7 @@ DH.store = {
       prefs: null, courses: [], active: null, progress: {}, xp: 0, streak: 0, lastDay: null,
       ask: [],          // Ask chat
       debate: null,     // current debate: { topic, side, sides, msgs, summary }
+      savedDebates: [], // debates saved from lessons for later: { topic, side, from }
       account: null,    // { username, token } when logged in
       updatedAt: 0
     };
@@ -279,7 +280,10 @@ DH.ai = {
   },
   profile: function () {
     var p = DH.store.state.prefs || {};
-    return { school: p.school || "", tradition: p.tradition || "", language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both" };
+    // The school course you're currently in counts as what you're studying.
+    var active = DH.COURSES[DH.store.state.active];
+    var school = active && !active.festival ? active.title : (p.school || "");
+    return { school: school, tradition: p.tradition || "", language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both" };
   },
   // Only keep citations that really are in the passages we sent.
   clean: function (answer, ids) {

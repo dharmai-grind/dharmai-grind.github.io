@@ -39,7 +39,7 @@ DH.buildLesson = function (lesson, prefs) {
 DH.LESSON_UI = ["Continue", "Check", "True", "False", "Try again", "Not quite", "Nice!", "Great job!", "Correct!",
   "Well reasoned!", "You'll see this one again at the end.", "Pick an answer first", "Tap a pair to match them",
   "Place every item first", "Correct order:", "Think about it", "Ask dharmAI after the lesson", "My thoughts:",
-  "Write your thoughts (optional, stays on your device)", "Mini debate", "Skip", "Debate after the lesson",
+  "Write your thoughts (optional, stays on your device)", "Mini debate", "Skip", "Save to my debates",
   "Pick a side first", "Pick the side you want to defend.", "Pick a side to start with. You'll argue both.",
   "Angada assigned you a side. You don't have to agree with it!", "Lesson complete!", "XP", "Accuracy", "Streak",
   "You saved these for dharmAI:", "Machine translated", "Summary, not a quote", "Tradition",
@@ -346,7 +346,7 @@ DH.Lesson.prototype.view_debate = function (c) {
 DH.Lesson.prototype.bind_debate = function (c) {
   var self = this, side = c.assigned;
   self.foot('<div class="err" id="err"></div><button class="btn" id="skip">' + DH.t("Skip") + "</button>" +
-    '<button class="btn primary" id="go">' + DH.t("Debate after the lesson") + "</button>");
+    '<button class="btn primary" id="go">' + DH.t("Save to my debates") + "</button>");
   document.querySelectorAll(".opt").forEach(function (b) {
     b.onclick = function () {
       document.querySelectorAll(".opt").forEach(function (x) { x.classList.remove("sel"); });
@@ -359,6 +359,12 @@ DH.Lesson.prototype.bind_debate = function (c) {
   document.getElementById("go").onclick = function () {
     if (!side) { document.getElementById("err").textContent = DH.tr("Pick a side first"); return; }
     self.later.push({ mode: "debate", q: DH.tr(c.q), side: DH.tr(side), label: DH.tr(c.q) });
+    // Also keep it in the Debate tab's "Saved debates" list until you start or remove it.
+    var st = DH.store.state;
+    st.savedDebates = st.savedDebates || [];
+    var dup = st.savedDebates.some(function (d) { return d.topic === DH.tr(c.q) && d.side === DH.tr(side); });
+    if (!dup) st.savedDebates.push({ topic: DH.tr(c.q), side: DH.tr(side), from: DH.tr(self.lesson.title) });
+    DH.store.save();
     self.next();
   };
 };
