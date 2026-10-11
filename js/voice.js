@@ -66,6 +66,34 @@ DH.voice = {
     return list[0] || null;
   },
 
+  // Sanskrit/Tamil words written in IAST (Śaṅkara, Kṛṣṇa, Gītā) get mangled by
+  // English voices ("Sankara"). Respell them the way English readers would:
+  // Shankara, Krishna, Geeta. Only words with IAST marks are changed, plus a
+  // few common words without marks where "c" means "ch".
+  IAST_MAP: [
+    ["jñ", "gy"], ["kṣ", "ksh"], ["ś", "sh"], ["ṣ", "sh"], ["ṛ", "ri"], ["ṝ", "ree"], ["ḷ", "l"],
+    ["ṅ", "n"], ["ñ", "n"], ["ṭ", "t"], ["ḍ", "d"], ["ṇ", "n"], ["ḥ", "h"], ["ṃ", "m"], ["ṁ", "m"],
+    ["ā", "a"], ["ī", "ee"], ["ū", "oo"], ["ē", "e"], ["ō", "o"],
+    ["ḻ", "zh"], ["ṟ", "r"], ["ṉ", "n"]
+  ],
+  PLAIN_SANSKRIT: { caraka: "Charaka", candra: "Chandra", caitra: "Chaitra", cit: "chit", acit: "achit", caṇḍī: "Chandi", carita: "charita", cakra: "chakra" },
+  respell: function (text) {
+    var self = this;
+    return String(text).replace(/[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+/g, function (word) {
+      var lower = word.toLowerCase();
+      if (self.PLAIN_SANSKRIT[lower]) return self.matchCase(word, self.PLAIN_SANSKRIT[lower]);
+      if (!/[āīūṛṝḷṅṭḍṇśṣḥṃṁēōḻṟṉ]|jñ/i.test(word)) return word; // ordinary word (incl. Spanish "señor")
+      var out = lower.replace(/c(?!h)/g, "ch"); // in Sanskrit, c is always "ch"
+      out = out.replace(/^ī/, "i").replace(/ī$/, "i"); // Īśvara → Ishvara, Purī → Puri (not "Puree")
+      self.IAST_MAP.forEach(function (m) { out = out.split(m[0]).join(m[1]); });
+      return self.matchCase(word, out);
+    });
+  },
+  matchCase: function (orig, out) {
+    return orig.charAt(0) === orig.charAt(0).toUpperCase() ? out.charAt(0).toUpperCase() + out.slice(1) : out;
+  },
+  INDIC: ["hi", "sa", "ta", "te", "kn", "ml", "mr", "gu", "bn", "pa", "or", "as", "ne", "kok", "mai", "si"],
+
   // Turn app text (markdown, citations, bullets) into something nice to hear.
   clean: function (text) {
     return String(text || "")
@@ -100,7 +128,10 @@ DH.voice = {
       var lang = p.lang || DH.lang();
       var voice = self.pick(lang);
       if (!voice) { missing = true; return; }
-      self.chunks(self.clean(p.text)).forEach(function (c) {
+      var text = self.clean(p.text);
+      // Non-Indian voices (English, French...) need Sanskrit words respelled.
+      if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) < 0) text = self.respell(text);
+      self.chunks(text).forEach(function (c) {
         var u = new SpeechSynthesisUtterance(c);
         u.voice = voice;
         u.lang = voice.lang;
