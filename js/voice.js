@@ -165,6 +165,45 @@ DH.voice = {
     if (prevCons) out += "्"; // word ends in a consonant (bhagavad → भगवद्)
     return out;
   },
+  // Telugu and Kannada scripts sit at a fixed offset from Devanagari in
+  // Unicode, letter for letter, so converting is just shifting code points.
+  // Their voices keep the final "a" (Hindi voices drop it: "Shankar").
+  SCRIPT_OFFSET: { te: 0x300, kn: 0x380 },
+  fromDeva: function (deva, script) {
+    var off = this.SCRIPT_OFFSET[script];
+    if (!off) return deva;
+    return Array.from(deva.replace(/़/g, "")).map(function (ch) {
+      var cp = ch.codePointAt(0);
+      return cp >= 0x0901 && cp <= 0x094D ? String.fromCodePoint(cp + off) : ch;
+    }).join("");
+  },
+  // Which voice says Indian words / Sanskrit. Order (Auto): Telugu, Kannada,
+  // Indian English, Hindi. Returns { voice, mode: "te"|"kn"|"enin"|"hi" }.
+  NAME_MODES: [["te", "te"], ["kn", "kn"], ["en-IN", "enin"], ["hi", "hi"]],
+  nameVoice: function (matchVoice, devanagariOnly) {
+    var pref = (((DH.store.state || {}).prefs) || {}).nameVoice || "auto";
+    var self = this, g = this.gender(matchVoice);
+    var order = this.NAME_MODES.filter(function (m) { return !(devanagariOnly && m[1] === "enin"); });
+    if (pref !== "auto") {
+      var chosen = order.filter(function (m) { return m[1] === pref; });
+      order = chosen.concat(order.filter(function (m) { return m[1] !== pref; }));
+    }
+    for (var i = 0; i < order.length; i++) {
+      var list = this.forLang(order[i][0]);
+      if (order[i][0] === "en-IN") list = list.filter(function (v) { return /en[-_]IN/i.test(v.lang); });
+      if (!list.length) continue;
+      var v = (g && list.find(function (x) { return self.gender(x) === g; })) || list[0];
+      return { voice: v, mode: order[i][1] };
+    }
+    return null;
+  },
+  // Text for an Indian-word run, written for the chosen voice.
+  forMode: function (seg, mode) {
+    if (mode === "enin") return this.respell(seg.orig);
+    var deva = seg.iast.map(this.toDeva, this).join(" ");
+    return mode === "hi" ? deva : this.fromDeva(deva, mode);
+  },
+
   // The IAST form of a word if it's an Indian word, else null.
   indicForm: function (word) {
     var lower = word.toLowerCase().replace(/'s$/, ""); // Āṇṭāḷ's → Āṇṭāḷ
@@ -174,26 +213,32 @@ DH.voice = {
     return null;
   },
   // Split English text into English runs and runs of Indian words.
+  // Returns runs: { indic: false, text } for English, or
+  // { indic: true, orig: "Bhagavad Gītā", iast: ["bhagavad", "gītā"] } for Indian words.
   segments: function (text) {
     var self = this, segs = [];
-    var push = function (t, indic) {
-      var last = segs[segs.length - 1];
-      if (last && last.indic === indic) last.text += t; else segs.push({ text: t, indic: indic });
-    };
     String(text).split(/([A-Za-zÀ-ÿĀ-ſḀ-ỿ']+(?:-[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+)*)/).forEach(function (piece, idx) {
       if (!piece) return;
+      var last = segs[segs.length - 1];
       if (idx % 2 === 0) {
-        // Spaces between two Indian words stay with the Indian run; punctuation ends it.
-        var last = segs[segs.length - 1];
-        if (last && last.indic && /^\s+$/.test(piece)) last.text += piece; else push(piece, false);
+        // Spaces between two Indian words stay in the Indian run; punctuation ends it.
+        if (last && last.indic && /^\s+$/.test(piece)) last.orig += piece;
+        else if (last && !last.indic) last.text += piece;
+        else segs.push({ indic: false, text: piece });
         return;
       }
       var parts = piece.split("-"), forms = parts.map(function (p) { return self.indicForm(p); });
       if (forms.some(function (f) { return f; })) {
-        push(parts.map(function (p, k) { return self.toDeva(forms[k] || p.toLowerCase().replace(/'s$/, "")); }).join(" "), true);
-      } else push(piece, false);
+        var iast = parts.map(function (p, k) { return forms[k] || p.toLowerCase().replace(/'s$/, ""); });
+        if (last && last.indic) { last.orig += piece; last.iast = last.iast.concat(iast); }
+        else segs.push({ indic: true, orig: piece, iast: iast });
+      } else if (last && !last.indic) last.text += piece;
+      else segs.push({ indic: false, text: piece });
     });
-    return segs.map(function (s) { return { text: s.text.trim(), indic: s.indic }; }).filter(function (s) { return /\S/.test(s.text) && /[\p{L}\p{N}]/u.test(s.text); });
+    return segs.filter(function (s) { return s.indic || (/[\p{L}\p{N}]/u.test(s.text)); }).map(function (s) {
+      if (!s.indic) s.text = s.text.trim(); else s.orig = s.orig.trim();
+      return s;
+    });
   },
   // Guess a voice's gender from its name, to pair similar-sounding voices.
   gender: function (v) {
@@ -202,13 +247,6 @@ DH.voice = {
     if (/david|mark|guy|ravi|hemant|madhur|prabhat|alex|daniel|tom|ryan|eric|christopher|male|man|fred|rishi|aaron/.test(n)) return "m";
     return "";
   },
-  hindiFor: function (englishVoice) {
-    var list = this.forLang("hi");
-    if (!list.length) return null;
-    var g = this.gender(englishVoice), self = this;
-    return (g && list.find(function (v) { return self.gender(v) === g; })) || list[0];
-  },
-
   INDIC: ["hi", "sa", "ta", "te", "kn", "ml", "mr", "gu", "bn", "pa", "or", "as", "ne", "kok", "mai", "si"],
 
   // Turn app text (markdown, citations, bullets) into something nice to hear.
@@ -241,24 +279,36 @@ DH.voice = {
     var self = this, synth = window.speechSynthesis;
     var rate = parseFloat(((DH.store.state || {}).prefs || {}).rate) || 1;
     var queue = [], missing = false;
+    var add = function (t, v) {
+      self.chunks(t).forEach(function (c) {
+        var u = new SpeechSynthesisUtterance(c);
+        u.voice = v; u.lang = v.lang; u.rate = rate;
+        queue.push(u);
+      });
+    };
+    var mainVoice = self.pick(DH.lang());
     parts.forEach(function (p) {
       var lang = p.lang || DH.lang();
+      var text = self.clean(p.text);
+      // A Sanskrit verse (Devanagari): Telugu/Kannada voice keeps final vowels.
+      if (lang === "sa") {
+        // Indian English can read the verse's romanized form (p.iast), if we have it.
+        var sv = self.nameVoice(mainVoice, !p.iast);
+        if (!sv) { missing = true; return; }
+        if (sv.mode === "enin") add(self.respell(p.iast), sv.voice);
+        else add(sv.mode === "hi" ? text : self.fromDeva(text, sv.mode), sv.voice);
+        return;
+      }
       var voice = self.pick(lang);
       if (!voice) { missing = true; return; }
-      var text = self.clean(p.text);
-      var add = function (t, v) {
-        self.chunks(t).forEach(function (c) {
-          var u = new SpeechSynthesisUtterance(c);
-          u.voice = v; u.lang = v.lang; u.rate = rate;
-          queue.push(u);
-        });
-      };
       if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) >= 0) { add(text, voice); return; }
-      // Non-Indian voice: Indian words go to a Hindi voice (in Devanagari).
-      // Without a Hindi voice, fall back to English-friendly respelling.
-      var hindi = self.hindiFor(voice);
-      if (!hindi) { add(self.respell(text), voice); return; }
-      self.segments(text).forEach(function (s) { add(s.text, s.indic ? hindi : voice); });
+      // Non-Indian voice: Indian words go to an Indian voice (Telugu, Kannada,
+      // Indian English or Hindi). With none, fall back to English respelling.
+      var nv = self.nameVoice(voice, false);
+      if (!nv) { add(self.respell(text), voice); return; }
+      self.segments(text).forEach(function (s) {
+        if (s.indic) add(self.forMode(s, nv.mode), nv.voice); else add(s.text, voice);
+      });
     });
     if (!queue.length) {
       DH.app.toast(DH.tr("No voice for this language on your device. You can add one in your device's language or speech settings."));
@@ -290,7 +340,6 @@ DH.voice = {
 
   // Voice language for a verse's original script.
   verseLang: function (s) {
-    var o = s.olang || "sa";
-    return o === "sa" ? "hi" : o; // Sanskrit is read with a Hindi (Devanagari) voice
+    return s.olang || "sa"; // "sa" = Sanskrit in Devanagari (see say())
   }
 };

@@ -851,6 +851,16 @@ DH.app = {
           voices.map(function (v) { return '<option value="' + DH.esc(v.voiceURI) + '"' + (cur === v.voiceURI ? " selected" : "") + ">" + DH.esc(v.name + " (" + v.lang + ")") + "</option>"; }).join("") +
           "</select></label>" +
           (voices.length ? "" : '<p class="small warn">' + t("Your device has no voice for this language yet. You can add one in your device's language or speech settings.") + "</p>") +
+          (function () {
+            var nv = DH.voice.nameVoice(DH.voice.pick(DH.lang()), false);
+            var cur2 = p.nameVoice || "auto";
+            var opt = function (v, label) { return '<option value="' + v + '"' + (cur2 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
+            return '<label class="field"><span>' + t("Voice for Sanskrit and Indian names") + '</span><select data-pref="nameVoice">' +
+              opt("auto", "Automatic (Telugu, then Kannada, then Indian English, then Hindi)") +
+              opt("te", "Telugu voice") + opt("kn", "Kannada voice") + opt("enin", "Indian English voice") + opt("hi", "Hindi voice (drops the final 'a')") +
+              "</select></label>" +
+              '<p class="small">' + (nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("No Indian voice found on this device, so names are respelled for the English voice.")) + "</p>";
+          })() +
           '<div class="voice-row"><label class="field"><span>' + t("Reading speed") + "</span>" + sel("rate", [["0.85", "Slower"], ["1", "Normal"], ["1.15", "Faster"]]) + "</label>" +
           '<button class="btn small" id="testVoice"><i class="ti ti-volume"></i> ' + t("Test") + "</button></div>";
       })() +
@@ -886,6 +896,7 @@ DH.app = {
         st.prefs[el.dataset.pref] = el.value.trim();
         DH.store.save();
         if (el.dataset.pref === "lang") { self.applyDir(); self.go("me"); return; }
+        if (el.dataset.pref === "nameVoice" || el.dataset.pref === "voice") { self.go("me"); return; } // refresh "In use"
         document.getElementById("saved").textContent = DH.tr("Saved");
       };
     });
@@ -900,7 +911,7 @@ DH.app = {
     var on = function (id, fn) { var el = document.getElementById(id); if (el) el.onclick = fn; };
     on("testVoice", function () {
       DH.voice.say([{ text: DH.tr("Namaste! I'm Angada. This is how I'll read your lessons, like the names Rāmānuja, Śaṅkara and Mahiṣāsura.") },
-        { text: "सत्यं ज्ञानमनन्तं ब्रह्म", lang: "hi" }], document.getElementById("testVoice"));
+        { text: "सत्यं ज्ञानमनन्तं ब्रह्म", lang: "sa", iast: "satyaṃ jñānam anantaṃ brahma" }], document.getElementById("testVoice"));
     });
     on("signup", function () { self.auth("signup"); });
     on("login", function () { self.auth("login"); });

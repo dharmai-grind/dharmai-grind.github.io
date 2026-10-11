@@ -114,7 +114,7 @@ DH.sourceBox = function (id) {
   if (!s) return "";
   var label = s.kind === "summary" ? "Summary, not a quote" : s.kind === "tradition" ? "Tradition" : "";
   // Read aloud: the original (in its own language), then the meaning.
-  var sayParts = (s.sa ? [{ text: s.sa.replace(/…/g, ""), lang: DH.voice.verseLang(s) }] : []).concat([{ text: DH.tr(s.en) }]);
+  var sayParts = (s.sa ? [{ text: s.sa.replace(/…/g, ""), lang: DH.voice.verseLang(s), iast: (s.iast || "").replace(/…/g, "") }] : []).concat([{ text: DH.tr(s.en) }]);
   return '<div class="verse">' + DH.voice.button(sayParts, s.sa ? "Listen to the original and its meaning" : "Read aloud") +
     (s.sa ? '<div class="sa" lang="' + (s.olang || "sa") + '">' + DH.esc(s.sa) + '</div><div class="iast">' + DH.esc(s.iast) + "</div>" : "") +
     '<div class="vtr">' + DH.t(s.en) + "</div>" +
