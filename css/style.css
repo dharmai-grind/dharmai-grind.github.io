@@ -254,6 +254,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .toast { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 0.9rem; z-index: 40; max-width: 90vw; text-align: center; }
 
+/* folding sections (Special settings) */
+.fold { border: 2px solid var(--line); border-radius: 16px; margin: 14px 0 4px; background: var(--card); }
+.fold summary { cursor: pointer; padding: 12px 14px; font-weight: 800; list-style: none; display: flex; align-items: center; gap: 8px; }
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary::after { content: "›"; margin-left: auto; font-size: 1.4rem; line-height: 1; transition: transform 0.2s; color: var(--muted); }
+.fold[open] > summary::after { transform: rotate(90deg); }
+.fold > *:not(summary) { margin-left: 14px; margin-right: 14px; }
+.fold.inner { margin: 0 14px 12px; border-radius: 12px; background: var(--bg); }
+.fold.inner summary { font-weight: 700; }
+.fold.inner > p, .fold.inner > .field { margin-left: 12px; margin-right: 12px; }
+.fold.inner > .field:last-child { padding-bottom: 12px; }
+
 /* profile */
 .me-head { display: flex; align-items: center; gap: 14px; }
 .me-head p { color: var(--muted); font-size: 0.9rem; }

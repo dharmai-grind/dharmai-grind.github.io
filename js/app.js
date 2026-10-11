@@ -838,17 +838,23 @@ DH.app = {
       '<label class="field"><span>' + t("Lesson length") + "</span>" + sel("length", [["short", "About 2 minutes"], ["medium", "About 5 minutes"], ["long", "10 minutes or more"]]) + "</label>" +
       '<label class="field"><span>' + t("More of") + "</span>" + sel("focus", [["think", "Critical thinking"], ["trivia", "Trivia"], ["both", "Both"]]) + "</label>" +
       '<label class="field"><span>' + t("Debates") + "</span>" + sel("debate", [["choose", "Yes, I pick my side"], ["assign", "Yes, assign me a side"], ["both", "Yes, let me argue both sides"], ["none", "No debates, just lessons"]]) + "</label>" +
+      // Special settings: folded away; one fold per course that has unit levels.
       (function () {
         var topics = DH.app.allTopics().filter(function (x) { return st.courses.indexOf(x.course) >= 0; });
         if (!topics.length) return "";
         var lv = st.levels || {};
-        return "<h2>" + t("Your level in each topic") + '</h2><p class="small">' + t("Sets how technical each unit's lessons get.") + "</p>" +
-          topics.map(function (x) {
-            return '<label class="field"><span>' + t(x.label.charAt(0).toUpperCase() + x.label.slice(1)) + '</span><select data-level="' + x.topic + '">' +
-              '<option value=""' + (lv[x.topic] ? "" : " selected") + ">" + t("Not set yet (asked at the first lesson)") + "</option>" +
-              DH.LEVELS.map(function (l) { return '<option value="' + l[0] + '"' + (lv[x.topic] === l[0] ? " selected" : "") + ">" + t(l[1]) + "</option>"; }).join("") +
-              "</select></label>";
-          }).join("");
+        var courses = topics.map(function (x) { return x.course; }).filter(function (c, i, a) { return a.indexOf(c) === i; });
+        return '<details class="fold special"><summary><i class="ti ti-adjustments"></i> ' + t("Special settings") + "</summary>" +
+          courses.map(function (cid) {
+            return '<details class="fold inner"><summary>' + t(DH.COURSES[cid].title) + "</summary>" +
+              '<p class="small">' + t("Your level in each unit. It sets how technical that unit's lessons get.") + "</p>" +
+              topics.filter(function (x) { return x.course === cid; }).map(function (x) {
+                return '<label class="field"><span>' + t(x.label.charAt(0).toUpperCase() + x.label.slice(1)) + '</span><select data-level="' + x.topic + '">' +
+                  '<option value=""' + (lv[x.topic] ? "" : " selected") + ">" + t("Not set yet (asked at the first lesson)") + "</option>" +
+                  DH.LEVELS.map(function (l) { return '<option value="' + l[0] + '"' + (lv[x.topic] === l[0] ? " selected" : "") + ">" + t(l[1]) + "</option>"; }).join("") +
+                  "</select></label>";
+              }).join("") + "</details>";
+          }).join("") + "</details>";
       })() +
       '<p class="small" id="saved"></p>' +
       "<h2>" + t("About DHARMAi") + "</h2><p>" + t("DHARMAi teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
