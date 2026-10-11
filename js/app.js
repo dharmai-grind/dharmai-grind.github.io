@@ -88,7 +88,7 @@ DH.app = {
         "<h2>" + t("A festival") + "</h2>" +
         '<div class="opts">' + group("festival") + "</div>" +
         '<div class="or"><span>' + t("or") + "</span></div>" +
-        "<h2>" + t("A topic") + "</h2>" +
+        "<h2>" + t("A miscellaneous topic") + "</h2>" +
         '<div class="opts">' + group("topic") + "</div>";
     }
     if (name === "tradition") {
@@ -473,7 +473,7 @@ DH.app = {
     return "<h1>" + DH.t("Courses") + "</h1><p>" + DH.t("Take as many as you like at the same time.") + "</p>" +
       "<h2>" + DH.t("Philosophical schools") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "school"; }).map(card).join("") +
       "<h2>" + DH.t("Festivals") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "festival"; }).map(card).join("") +
-      "<h2>" + DH.t("Topics") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "topic"; }).map(card).join("");
+      "<h2>" + DH.t("Miscellaneous topics") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "topic"; }).map(card).join("");
   },
 
   bind_courses: function () {
