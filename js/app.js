@@ -853,18 +853,24 @@ DH.app = {
           (voices.length ? "" : '<p class="small warn">' + t("Your device has no voice for this language yet. You can add one in your device's language or speech settings.") + "</p>") +
           (function () {
             var nv = DH.voice.nameVoice(DH.voice.pick(DH.lang()), false);
-            var cur2 = p.nameVoice || "auto";
+            var cur2 = p.nameVoice || "one-main";
             var opt = function (v, label) { return '<option value="' + v + '"' + (cur2 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
             var one = cur2 === "one-main";
+            var cur3 = p.stressStyle || "caps";
+            var opt3 = function (v, label) { return '<option value="' + v + '"' + (cur3 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
             return '<label class="field"><span>' + t("Voice for Sanskrit and Indian names") + '</span><select data-pref="nameVoice">' +
-              opt("auto", "Automatic: an Indian voice for names, same gender (recommended)") +
-              opt("one-main", "One American voice for everything (names spelled out)") +
+              opt("one-main", "One American voice for everything (recommended)") +
+              opt("auto", "Switch to an Indian voice for names (same gender)") +
               opt("one-enin", "One Indian English voice for everything") +
               opt("te", "Switch to a Telugu voice for names") + opt("kn", "Switch to a Kannada voice for names") +
               opt("enin", "Switch to an Indian English voice for names") + opt("hi", "Switch to a Hindi voice for names (drops the final 'a')") +
               "</select></label>" +
-              '<p class="small">' + (one ? t("Names are spelled out for your main voice, e.g. Navarātri is read as 'nuhvuhrahtree'.")
-                : nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("That voice isn't on this device, so names are respelled for your main voice.")) + "</p>";
+              '<p class="small">' + (one ? t("Indian words are spelled out by their sounds for your main voice, with the stressed syllable worked out (Navarātri → nuhvuhRAHtree).")
+                : nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("That voice isn't on this device, so names are respelled for your main voice.")) + "</p>" +
+              (one ? '<div class="voice-row"><label class="field"><span>' + t("How to show stress to the voice") + '</span><select data-pref="stressStyle">' +
+                opt3("caps", "Style 1: capitals (nuhvuhRAHtree)") + opt3("split", "Style 2: a gap (nuhvuh rahtree)") + opt3("plain", "Style 3: plain (nuhvuhrahtree)") +
+                '</select></label><button class="btn small" id="compareStress"><i class="ti ti-volume"></i> ' + t("Compare") + "</button></div>" +
+                '<p class="small">' + t("Voices differ in how they react to these. Press Compare, listen, and pick the style that sounds most natural on your device.") + "</p>" : "");
           })() +
           '<div class="voice-row"><label class="field"><span>' + t("Reading speed") + "</span>" + sel("rate", [["0.85", "Slower"], ["1", "Normal"], ["1.15", "Faster"]]) + "</label>" +
           '<button class="btn small" id="testVoice"><i class="ti ti-volume"></i> ' + t("Test") + "</button></div>";
@@ -914,6 +920,14 @@ DH.app = {
       };
     });
     var on = function (id, fn) { var el = document.getElementById(id); if (el) el.onclick = fn; };
+    on("compareStress", function () {
+      var V = DH.voice, words = ["navarātri", "rāmāyaṇa", "śaṅkara"];
+      var line = function (style, label) {
+        return { text: label + ". " + words.map(function (w) { return V.usSyllables(w, style); }).join(", ") + "." };
+      };
+      // Speak the respelled words as-is (they're already respelled; don't respell again).
+      V.say([line("caps", "Style 1"), line("split", "Style 2"), line("plain", "Style 3")], document.getElementById("compareStress"), true);
+    });
     on("testVoice", function () {
       DH.voice.say([{ text: DH.tr("Namaste! I'm Angada. This is how I'll read your lessons, like the names Rāmānuja, Śaṅkara and Mahiṣāsura.") },
         { text: "सत्यं ज्ञानमनन्तं ब्रह्म", lang: "sa", iast: "satyaṃ jñānam anantaṃ brahma" }], document.getElementById("testVoice"));

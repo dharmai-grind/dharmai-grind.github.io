@@ -178,46 +178,65 @@ DH.voice = {
     "k": "k", "g": "g", "ṅ": "n", "c": "ch", "j": "j", "ñ": "n", "ṭ": "t", "ḍ": "d", "ṇ": "n", "t": "t", "d": "d", "n": "n",
     "p": "p", "b": "b", "m": "m", "y": "y", "r": "r", "l": "l", "v": "v", "ś": "sh", "ṣ": "sh", "s": "s", "h": "h",
     "ḷ": "l", "ḻ": "zh", "ṟ": "r", "ṉ": "n", "ṃ": "m", "ṁ": "m", "ḥ": "h" },
-  usSyllables: function (w) {
-    w = w.replace(/jñ/g, "gy"); // jñāna → gyaana
-    var toks = [], i = 0, V = this.US_VOW, C = this.US_CONS;
+  // Split an IAST word into syllables respelled for an American voice, and
+  // work out which one is stressed. Returns { sylls: [...], stress: index }.
+  // Stress (classical rule): the second-to-last syllable if heavy (long vowel
+  // or closed); otherwise the third-to-last; e.g. navaRĀtri, rāMĀyaṇa, ŚAṄkara.
+  US_LONG: { "ā": 1, "ī": 1, "ū": 1, "ṝ": 1, "e": 1, "ē": 1, "o": 1, "ō": 1, "ai": 1, "au": 1 },
+  usParse: function (w) {
+    w = w.replace(/jñ/g, "gy"); // jñāna → gyahnuh
+    var toks = [], i = 0, V = this.US_VOW, C = this.US_CONS, self = this;
     while (i < w.length) {
       var two = w.substr(i, 2), one = w.charAt(i);
-      if (V[two]) { toks.push({ v: V[two] }); i += 2; continue; }
-      if (V[one]) { toks.push({ v: V[one] }); i += 1; continue; }
+      if (V[two]) { toks.push({ v: V[two], long: !!self.US_LONG[two] }); i += 2; continue; }
+      if (V[one]) { toks.push({ v: V[one], long: !!self.US_LONG[one] }); i += 1; continue; }
+      if (one === "ñ") { toks.push({ c: /[aāiīuūeoṛ]/.test(w.charAt(i + 1)) ? "ny" : "n" }); i += 1; continue; } // ñ before a vowel is "ny"
       if (C[two]) { toks.push({ c: C[two] }); i += 2; continue; }
-      if (C[one]) { toks.push({ c: C[one] }); i += 1; continue; }
-      toks.push({ c: one }); i += 1; // anything else (e.g. g, y from "gy") as-is
+      if (C[one]) { toks.push({ c: C[one], nasal: one === "ṃ" || one === "ṁ" || one === "ḥ" }); i += 1; continue; }
+      toks.push({ c: one }); i += 1;
     }
-    // Group: each vowel takes the consonant(s) just before it as its onset
-    // (one consonant, or two if the second is r/y/v/l, like "pra", "shri");
-    // earlier consonants close the previous syllable.
+    // Each vowel takes the consonant(s) just before it as its onset (one, or two
+    // if the second is r/y/v/l: "pra", "shri"); earlier consonants close the
+    // previous syllable (which makes it heavy).
     var sylls = [], cons = [];
     toks.forEach(function (t) {
-      if (t.c !== undefined) { cons.push(t.c); return; }
-      var onsetLen = cons.length >= 2 && /^(r|y|v|l)$/.test(cons[cons.length - 1]) ? 2 : Math.min(1, cons.length);
+      if (t.c !== undefined) { cons.push(t); return; }
+      var onsetLen = cons.length >= 2 && /^(r|y|v|l)$/.test(cons[cons.length - 1].c) ? 2 : Math.min(1, cons.length);
       var coda = cons.slice(0, cons.length - onsetLen), onset = cons.slice(cons.length - onsetLen);
-      if (sylls.length) sylls[sylls.length - 1] += coda.join(""); else onset = coda.concat(onset);
-      // ai after a consonant reads better as "y" (tiruppahvy, vyshayshikuh).
-      var v = t.v === "eye" && onset.length ? "y" : t.v;
-      sylls.push(onset.join("") + v);
+      if (sylls.length && coda.length) { var prev = sylls[sylls.length - 1]; prev.text += coda.map(function (x) { return x.c; }).join(""); prev.heavy = true; }
+      else if (!sylls.length) onset = coda.concat(onset);
+      var v = t.v === "eye" && onset.length ? "y" : t.v; // ai after a consonant reads better as "y"
+      sylls.push({ text: onset.map(function (x) { return x.c; }).join("") + v, heavy: t.long });
       cons = [];
     });
-    if (cons.length) { if (sylls.length) sylls[sylls.length - 1] += cons.join(""); else sylls.push(cons.join("")); }
-    // A final short i would be read "eye" (tri → "try"), so make it "ee" (nuhvuhrahtree).
-    if (sylls.length) sylls[sylls.length - 1] = sylls[sylls.length - 1].replace(/i$/, "ee");
-    // One word, no hyphens; "uhh" before a consonant is just "uh" (bruhmuhn, but muhhishah).
-    return sylls.join("").replace(/uhh(?![aeiouy])/g, "uh");
+    if (cons.length) {
+      var tail = cons.map(function (x) { return x.c; }).join("");
+      if (sylls.length) { sylls[sylls.length - 1].text += tail; sylls[sylls.length - 1].heavy = true; } else sylls.push({ text: tail, heavy: true });
+    }
+    sylls.forEach(function (s) { s.text = s.text.replace(/uhh$/, "uh"); }); // bruh(h)muhn
+    var n = sylls.length;
+    if (n) sylls[n - 1].text = sylls[n - 1].text.replace(/i$/, "ee"); // final i: "tree", not "try"
+    var stress = n <= 1 ? 0 : sylls[n - 2].heavy ? n - 2 : n >= 3 ? n - 3 : 0;
+    return { sylls: sylls.map(function (s) { return s.text; }), stress: stress };
+  },
+  // style: "caps" (nuhvuhRAHtree), "split" (nuhvuh rahtree) or "plain".
+  usSyllables: function (w, style) {
+    var p = this.usParse(w);
+    return p.sylls.map(function (s, i) {
+      if (i !== p.stress || p.sylls.length < 2) return s;
+      if (style === "caps") return s.toUpperCase();
+      if (style === "split" && i > 0) return " " + s;
+      return s;
+    }).join("");
   },
   // force = every word is Sanskrit (verses), even ones without accent marks.
-  respellUS: function (text, force) {
+  respellUS: function (text, force, style) {
     var self = this;
+    style = style || (((DH.store.state || {}).prefs) || {}).stressStyle || "caps";
     return String(text).replace(/[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+/g, function (word) {
       var iast = self.indicForm(word) || (force ? word.toLowerCase().replace(/^'/, "") : null);
       if (!iast) return word;
-      var out = self.usSyllables(iast);
-      var first = word.replace(/^'/, "").charAt(0);
-      return first !== first.toLowerCase() ? out.charAt(0).toUpperCase() + out.slice(1) : out;
+      return self.usSyllables(iast, style);
     });
   },
 
@@ -367,7 +386,7 @@ DH.voice = {
   },
 
   // parts: [{ text, lang }]; lang defaults to the app language.
-  say: function (parts, btn) {
+  say: function (parts, btn, raw) { // raw = text is already respelled, speak as-is
     if (!this.supported) { DH.app.toast(DH.tr("Read-aloud isn't supported in this browser.")); return; }
     this.stop();
     var self = this, synth = window.speechSynthesis;
@@ -382,7 +401,8 @@ DH.voice = {
     };
     var mainVoice = self.pick(DH.lang());
     // Decide gender once for the whole reading, so it never flips between parts.
-    if (mainVoice && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
+    var np = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
+    if (mainVoice && np !== "one-main" && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
       var nv0 = self.nameVoice(mainVoice, false);
       var g0 = self.gender(mainVoice), g1 = nv0 && self.gender(nv0.voice);
       if (g0 && g1 && g0 !== g1) mainVoice = self.sameGenderMain(DH.lang(), g1) || mainVoice;
@@ -393,7 +413,7 @@ DH.voice = {
       // A Sanskrit verse (Devanagari): Telugu/Kannada voice keeps final vowels.
       if (lang === "sa") {
         // Indian English can read the verse's romanized form (p.iast), if we have it.
-        var vp = ((DH.store.state.prefs) || {}).nameVoice || "auto";
+        var vp = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
         if (vp === "one-main" && p.iast && /^en/i.test(mainVoice.lang)) { add(self.respellUS(p.iast, true), mainVoice); return; } // "one American voice" setting
         if (vp === "one-enin" && p.iast && self.indianEnglish(mainVoice)) { add(self.respell(p.iast), self.indianEnglish(mainVoice)); return; }
         var sv = self.nameVoice(mainVoice, !p.iast);
@@ -404,9 +424,10 @@ DH.voice = {
       }
       var voice = lang === DH.lang() ? mainVoice : self.pick(lang);
       if (!voice) { missing = true; return; }
+      if (raw) { add(text, voice); return; }
       if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) >= 0) { add(text, voice); return; }
       // "One voice for everything" settings: no switching at all.
-      var namePref = ((DH.store.state.prefs) || {}).nameVoice || "auto";
+      var namePref = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
       if (namePref === "one-main" && /^en/i.test(voice.lang)) { add(self.respellUS(text), voice); return; } // "one American voice" setting
       if (namePref === "one-enin" && /^en/i.test(voice.lang)) {
         var ie = self.indianEnglish(voice);
