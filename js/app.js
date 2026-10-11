@@ -1,18 +1,32 @@
-// The app shell: onboarding, home (course map), courses, Ask dharmAI, profile.
+// The app shell: onboarding, accounts, home (course map), courses, Ask, Debate, profile.
 
 DH.app = {
   tab: "learn",
-  askState: { mode: "ask", side: "", topic: "" },
 
   init: function () {
+    var self = this;
     DH.store.load();
     DH.i18n.loadCache();
     this.applyDir();
     if (!DH.store.state.prefs) this.onboard(0, {});
     else this.go(this.tab);
+    // If logged in, pick up progress made on another device.
+    DH.account.pull().then(function (changed) {
+      if (!changed) return;
+      self.applyDir();
+      if (DH.store.state.prefs && !document.querySelector(".lesson")) self.go(self.tab);
+    });
     if ("serviceWorker" in navigator && location.protocol === "https:") {
       navigator.serviceWorker.register("sw.js").catch(function () { });
     }
+  },
+
+  toast: function (msg) {
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function () { el.remove(); }, 3500);
   },
 
   applyDir: function () {
@@ -51,7 +65,8 @@ DH.app = {
       body = '<div class="center-screen">' + DH.angada(170, "cheer") +
         '<h1 class="brand">dharm<span>AI</span></h1>' +
         '<div class="bubble">' + t("Namaste! I'm Angada. In the Rāmāyaṇa I carried Rāma's message into Rāvaṇa's court and stood my ground. Let's explore big ideas together, a few minutes at a time.") + "</div>" +
-        '<button class="btn primary wide" id="next">' + t("Get started") + "</button></div>";
+        '<button class="btn primary wide" id="next">' + t("Get started") + "</button>" +
+        (DH.ai.configured() ? '<button class="btn wide" id="haveAcc">' + t("I already have an account") + "</button>" : "") + "</div>";
     }
     if (name === "school") {
       body = "<h1>" + t("Which school would you like to explore?") + "</h1>" +
@@ -122,6 +137,7 @@ DH.app = {
       };
     });
     if (document.getElementById("back")) document.getElementById("back").onclick = function () { self.onboard(step - 1, draft); };
+    if (document.getElementById("haveAcc")) document.getElementById("haveAcc").onclick = function () { self.auth("login"); };
     if (name === "language") {
       document.getElementById("lsearch").oninput = function (e) {
         var q = e.target.value.toLowerCase().trim();
@@ -166,12 +182,106 @@ DH.app = {
     this.go("learn");
   },
 
+  // ---------- Accounts: log in, sign up, recover ----------
+  // mode: "login" | "signup" | "recover"
+  auth: function (mode) {
+    var self = this, t = DH.t;
+    var title = { login: "Log in", signup: "Create an account", recover: "Reset your password" }[mode];
+    var html = '<div class="onboard"><div class="lesson-top"><button class="icon-btn" id="back" aria-label="Back"><i class="ti ti-arrow-left"></i></button></div>' +
+      '<div class="ob-body"><div class="auth-head">' + DH.angada(80, mode === "recover" ? "think" : "happy") + "<h1>" + t(title) + "</h1></div>" +
+      (mode === "signup" ? '<p class="small">' + t("Save your progress and use it on any device. No email needed. Don't use your real name as your username.") + "</p>" : "") +
+      '<form id="authForm" class="auth-form" autocomplete="on">' +
+      '<label class="field"><span>' + t("Username") + '</span><input id="aUser" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="20"></label>' +
+      (mode === "recover"
+        ? '<label class="field"><span>' + t("Recovery code") + '</span><input id="aCode" autocapitalize="characters" spellcheck="false" placeholder="ABCD-EFGH-JKLM"></label>' +
+          '<label class="field"><span>' + t("New password") + '</span><input id="aPass" type="password" autocomplete="new-password"></label>'
+        : '<label class="field"><span>' + t("Password") + '</span><input id="aPass" type="password" autocomplete="' + (mode === "signup" ? "new-password" : "current-password") + '"></label>') +
+      (mode === "signup" ? '<label class="field"><span>' + t("Password again") + '</span><input id="aPass2" type="password" autocomplete="new-password"></label>' : "") +
+      '<div class="err" id="err"></div>' +
+      '<button class="btn primary wide" id="aGo">' + t(mode === "login" ? "Log in" : mode === "signup" ? "Create account" : "Reset password") + "</button></form>" +
+      '<div class="auth-links">' +
+      (mode === "login" ? '<button class="link" data-auth="signup">' + t("Create an account") + '</button><button class="link" data-auth="recover">' + t("Forgot password?") + "</button>" : "") +
+      (mode !== "login" ? '<button class="link" data-auth="login">' + t("I already have an account") + "</button>" : "") +
+      "</div></div></div>";
+    self.paint(html, function () { self.auth(mode); });
+
+    document.getElementById("back").onclick = function () {
+      if (DH.store.state.prefs) self.go("me"); else self.onboard(0, {});
+    };
+    document.querySelectorAll("[data-auth]").forEach(function (b) { b.onclick = function () { self.auth(b.dataset.auth); }; });
+    var err = function (m) { document.getElementById("err").textContent = m; };
+    document.querySelectorAll("#authForm input").forEach(function (i) { i.oninput = function () { err(""); }; });
+
+    document.getElementById("authForm").onsubmit = function (e) {
+      e.preventDefault();
+      var user = document.getElementById("aUser").value.trim().toLowerCase();
+      var pass = document.getElementById("aPass").value;
+      if (!/^[a-z0-9_]{3,20}$/.test(user)) return err(DH.tr("Usernames are 3–20 characters: letters, numbers and _ only."));
+      if (pass.length < 8) return err(DH.tr("Passwords need at least 8 characters."));
+      var body = { username: user };
+      if (mode === "signup") {
+        if (pass !== document.getElementById("aPass2").value) return err(DH.tr("The two passwords don't match."));
+        body.password = pass;
+      } else if (mode === "recover") {
+        var code = document.getElementById("aCode").value.trim();
+        if (code.replace(/[^A-Za-z0-9]/g, "").length < 12) return err(DH.tr("Enter your 12-character recovery code."));
+        body.recoveryCode = code;
+        body.newPassword = pass;
+      } else body.password = pass;
+
+      var btn = document.getElementById("aGo");
+      btn.disabled = true;
+      btn.textContent = DH.tr("One moment...");
+      DH.account.call("/" + mode, body).then(function (res) {
+        return DH.account.start(res).then(function () { return res; });
+      }).then(function (res) {
+        self.applyDir();
+        if (res.recoveryCode) return self.showRecovery(res.recoveryCode);
+        self.afterAuth();
+      }).catch(function (ex) {
+        btn.disabled = false;
+        btn.textContent = DH.tr(mode === "login" ? "Log in" : mode === "signup" ? "Create account" : "Reset password");
+        err(DH.tr(ex.message === "Failed to fetch" ? "Couldn't reach dharmAI. Check your internet and try again." : ex.message));
+      });
+    };
+  },
+
+  afterAuth: function () {
+    if (DH.store.state.prefs) this.go("learn");
+    else this.onboard(1, {});
+  },
+
+  // Shown once after sign-up or a password reset.
+  showRecovery: function (code) {
+    var self = this, t = DH.t;
+    var html = '<div class="center-screen">' + DH.angada(110, "think") +
+      "<h1>" + t("Save your recovery code") + "</h1>" +
+      "<p>" + t("If you ever forget your password, this code is the only way back into your account. Write it down or screenshot it. You won't see it again.") + "</p>" +
+      '<div class="rec-code" id="code">' + DH.esc(code) + "</div>" +
+      '<button class="btn" id="copy"><i class="ti ti-copy"></i> ' + t("Copy") + "</button>" +
+      '<label class="check"><input type="checkbox" id="saved"> ' + t("I've saved my recovery code") + "</label>" +
+      '<div class="err" id="err"></div>' +
+      '<button class="btn primary wide" id="cont">' + t("Continue") + "</button></div>";
+    self.paint(html, function () { self.showRecovery(code); });
+    document.getElementById("copy").onclick = function () {
+      try { navigator.clipboard.writeText(code); self.toast(DH.tr("Copied")); } catch (e) { }
+    };
+    document.getElementById("saved").onchange = function () { document.getElementById("err").textContent = ""; };
+    document.getElementById("cont").onclick = function () {
+      if (!document.getElementById("saved").checked) {
+        document.getElementById("err").textContent = DH.tr("Tick the box once you've saved your code");
+        return;
+      }
+      self.afterAuth();
+    };
+  },
+
   // ---------- Shell ----------
   go: function (tab) {
     this.tab = tab;
     var self = this, rerender = function () { self.go(tab); };
     var content = this["screen_" + tab]();
-    var nav = [["learn", "ti-home", "Learn"], ["courses", "ti-books", "Courses"], ["ask", "ti-message-circle", "Ask"], ["me", "ti-user", "Profile"]];
+    var nav = [["learn", "ti-home", "Learn"], ["courses", "ti-books", "Courses"], ["ask", "ti-message-circle", "Ask"], ["debate", "ti-swords", "Debate"], ["me", "ti-user", "Profile"]];
     var st = DH.store.state;
     var html = '<div class="shell"><header class="topbar">' +
       '<span class="brand small">dharm<span>AI</span></span>' +
@@ -316,13 +426,43 @@ DH.app = {
     });
   },
 
-  // ---------- Ask dharmAI ----------
+  // ---------- Ask and Debate ----------
+  // From the end of a lesson: a saved question goes to Ask, a saved debate starts a Debate.
   openAsk: function (item) {
-    this.askState = { mode: item.mode, side: item.side || "", topic: item.mode === "debate" ? item.q : "" };
-    this.pendingQuestion = item.mode === "debate"
-      ? DH.tr("Let's debate:") + " " + item.q + "\n" + DH.tr("My side:") + " " + item.side
-      : item.q;
+    if (item.mode === "debate") {
+      DH.store.state.debate = { topic: item.q, side: item.side, sides: item.sides || [], msgs: [], summary: null };
+      DH.store.save();
+      this.go("debate");
+      return;
+    }
+    this.pendingQuestion = item.q;
     this.go("ask");
+  },
+
+  // One chat bubble (shared by Ask and Debate).
+  bubble: function (m) {
+    if (m.role === "user") return '<div class="msg user" dir="auto">' + DH.esc(m.text).replace(/\n/g, "<br>") + "</div>";
+    var body = m.offline
+      ? "<p>" + DH.t("dharmAI's AI isn't connected yet, so here are the passages in our library that best match:") + "</p>" +
+        (m.ids.length ? m.ids.map(function (id) { return '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>"; }).join(" ")
+          : "<p>" + DH.t("Nothing in the library matched. Try other words.") + "</p>")
+      : m.error ? '<p class="err">' + DH.esc(m.text) + "</p>" : '<div dir="auto">' + this.renderAnswer(m.text) + "</div>";
+    return '<div class="msg bot">' + DH.angada(34, m.mood || "happy") + '<div class="bot-body">' + body + "</div></div>";
+  },
+
+  typing: function () {
+    return '<div id="typing" hidden class="msg bot">' + DH.angada(34, "think") + '<div class="bot-body dots"><span></span><span></span><span></span></div></div>';
+  },
+
+  showTyping: function () {
+    document.getElementById("typing").hidden = false;
+    var m = document.getElementById("msgs");
+    if (m) m.scrollIntoView({ block: "end" });
+    window.scrollTo(0, document.body.scrollHeight);
+  },
+
+  aiError: function () {
+    return DH.tr("dharmAI couldn't answer right now (the free AI may be busy). Try again in a minute.");
   },
 
   renderAnswer: function (text) {
@@ -345,45 +485,23 @@ DH.app = {
   },
 
   screen_ask: function () {
-    var st = DH.store.state, self = this, a = this.askState;
-    var msgs = st.chat.map(function (m) {
-      if (m.role === "user") return '<div class="msg user" dir="auto">' + DH.esc(m.text).replace(/\n/g, "<br>") + "</div>";
-      var body = m.offline
-        ? "<p>" + DH.t("dharmAI's AI isn't connected yet, so here are the passages in our library that best match your question:") + "</p>" +
-          (m.ids.length ? m.ids.map(function (id) { return '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>"; }).join(" ")
-            : "<p>" + DH.t("Nothing in the library matched. Try other words.") + "</p>")
-        : m.error ? '<p class="err">' + DH.esc(m.text) + "</p>" : '<div dir="auto">' + self.renderAnswer(m.text) + "</div>";
-      return '<div class="msg bot">' + DH.angada(34, m.mode === "debate" ? "cheer" : "happy") + '<div class="bot-body">' + body + "</div></div>";
-    }).join("");
-    var empty = !st.chat.length
+    var st = DH.store.state, self = this;
+    var msgs = st.ask.map(function (m) { return self.bubble(m); }).join("");
+    var empty = !st.ask.length
       ? '<div class="ask-empty">' + DH.angada(110, "happy") + '<h1 class="ask-title">' + DH.t("AI and Dharma") + "</h1><p>" + DH.t("Ask me anything about Hindu philosophy, history, texts or festivals. I'll point you to the sources.") + "</p>" +
         '<div class="suggest">' + ["What is the difference between Advaita and Vishishtadvaita?", "Why do we keep Golu?", "What does tat tvam asi mean?", "Who were the Āḻvārs?"].map(function (q) {
           return '<button class="chip" data-q="' + DH.esc(DH.tr(q)) + '">' + DH.t(q) + "</button>";
         }).join("") + "</div></div>" : "";
     return '<div class="ask">' +
-      '<div class="mode-switch"><button class="' + (a.mode === "ask" ? "on" : "") + '" data-mode="ask"><i class="ti ti-message-circle"></i> ' + DH.t("Ask") + "</button>" +
-      '<button class="' + (a.mode === "debate" ? "on" : "") + '" data-mode="debate"><i class="ti ti-swords"></i> ' + DH.t("Debate") + "</button></div>" +
-      (a.mode === "debate" ? '<div class="debate-note">' + DH.t("Debate mode: state a position and Angada will raise respectful objections. He'll challenge arguments, not you.") + "</div>" : "") +
-      '<div class="msgs" id="msgs">' + empty + msgs + '<div id="typing" hidden class="msg bot">' + DH.angada(34, "think") + '<div class="bot-body dots"><span></span><span></span><span></span></div></div></div>' +
+      '<div class="msgs" id="msgs">' + empty + msgs + self.typing() + "</div>" +
       '<div class="notice"><i class="ti ti-info-circle"></i> ' + DH.t("Answers can be wrong. Check the cited sources, and don't share personal information.") +
-      (st.chat.length ? ' <button class="link" id="clear">' + DH.t("Clear chat") + "</button>" : "") + "</div>" +
-      '<form class="composer" id="composer"><textarea id="q" rows="1" maxlength="1000" placeholder="' + DH.esc(DH.tr(a.mode === "debate" ? "State your position..." : "Ask anything...")) + '" dir="auto"></textarea>' +
+      (st.ask.length ? ' <button class="link" id="clear">' + DH.t("Clear chat") + "</button>" : "") + "</div>" +
+      '<form class="composer" id="composer"><textarea id="q" rows="1" maxlength="1000" placeholder="' + DH.esc(DH.tr("Ask anything...")) + '" dir="auto"></textarea>' +
       '<button class="send" aria-label="Send"><i class="ti ti-send"></i></button></form><div class="err" id="err"></div></div>';
   },
 
-  bind_ask: function () {
-    var self = this, st = DH.store.state;
+  bindComposer: function (onSend, emptyMsg) {
     var box = document.getElementById("q");
-    var msgs = document.getElementById("msgs");
-    msgs.scrollTop = msgs.scrollHeight;
-    if (self.pendingQuestion) { box.value = self.pendingQuestion; self.pendingQuestion = null; }
-    document.querySelectorAll("[data-mode]").forEach(function (b) {
-      b.onclick = function () { self.askState.mode = b.dataset.mode; self.go("ask"); };
-    });
-    document.querySelectorAll("[data-q]").forEach(function (b) {
-      b.onclick = function () { box.value = b.dataset.q; box.focus(); };
-    });
-    if (document.getElementById("clear")) document.getElementById("clear").onclick = function () { st.chat = []; DH.store.save(); self.go("ask"); };
     box.oninput = function () { document.getElementById("err").textContent = ""; };
     box.onkeydown = function (e) {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); document.getElementById("composer").requestSubmit(); }
@@ -391,25 +509,195 @@ DH.app = {
     document.getElementById("composer").onsubmit = function (e) {
       e.preventDefault();
       var q = box.value.trim();
-      if (!q) { document.getElementById("err").textContent = DH.tr("Type a question first"); return; }
-      var mode = self.askState.mode;
-      var history = st.chat.filter(function (m) { return !m.offline && !m.error; }).map(function (m) { return { role: m.role, text: m.text }; });
-      st.chat.push({ role: "user", text: q, mode: mode });
+      if (!q) { document.getElementById("err").textContent = DH.tr(emptyMsg); return; }
+      onSend(q);
+    };
+    return box;
+  },
+
+  bind_ask: function () {
+    var self = this, st = DH.store.state;
+    window.scrollTo(0, document.body.scrollHeight);
+    var box = self.bindComposer(function (q) {
+      var history = st.ask.filter(function (m) { return !m.offline && !m.error; }).map(function (m) { return { role: m.role, text: m.text }; });
+      st.ask.push({ role: "user", text: q });
       DH.store.save();
       self.go("ask");
-      document.getElementById("typing").hidden = false;
-      var m2 = document.getElementById("msgs"); m2.scrollTop = m2.scrollHeight;
-      DH.ai.ask({ question: q, history: history, mode: mode, side: self.askState.side }).then(function (r) {
-        if (r.offline) st.chat.push({ role: "bot", offline: true, ids: r.ids, mode: mode });
-        else st.chat.push({ role: "bot", text: r.text, mode: mode });
-      }).catch(function (err) {
-        st.chat.push({ role: "bot", error: true, text: DH.tr("dharmAI couldn't answer right now (the free AI may be busy). Try again in a minute."), mode: mode });
+      self.showTyping();
+      DH.ai.ask({ question: q, history: history }).then(function (r) {
+        st.ask.push(r.offline ? { role: "bot", offline: true, ids: r.ids } : { role: "bot", text: r.text });
+      }).catch(function () {
+        st.ask.push({ role: "bot", error: true, text: self.aiError() });
       }).then(function () {
-        st.chat = st.chat.slice(-40);
+        st.ask = st.ask.slice(-40);
         DH.store.save();
         if (self.tab === "ask") self.go("ask");
       });
+    }, "Type a question first");
+    if (self.pendingQuestion) { box.value = self.pendingQuestion; self.pendingQuestion = null; }
+    document.querySelectorAll("[data-q]").forEach(function (b) {
+      b.onclick = function () { box.value = b.dataset.q; box.focus(); };
+    });
+    if (document.getElementById("clear")) document.getElementById("clear").onclick = function () { st.ask = []; DH.store.save(); self.go("ask"); };
+  },
+
+  // ---------- Debate ----------
+  // Debate topics from lessons the learner has finished (plus a few starters).
+  debateTopics: function () {
+    var st = DH.store.state, out = [];
+    st.courses.forEach(function (cid) {
+      var c = DH.COURSES[cid], done = (st.progress[cid] || { done: [] }).done;
+      c.units.forEach(function (u) {
+        u.lessons.forEach(function (l) {
+          if (done.indexOf(l.id) < 0) return;
+          l.cards.forEach(function (card) { if (card.t === "debate") out.push({ q: card.q, sides: card.sides }); });
+        });
+      });
+    });
+    var starters = [
+      { q: "Is it better to say the self is identical to God, different from God, or part of God?", sides: ["Identical (Advaita)", "Part of, like a body (Vishishtadvaita)", "Different (Dvaita)"] },
+      { q: "Should a festival keep one 'official' story, or is it richer with many?", sides: ["One shared story", "Many stories"] },
+      { q: "Should Golu stick to traditional dolls, or is it great when people add new themes (space, Lego, cricket)?", sides: ["Keep it traditional", "New themes keep it alive"] }
+    ];
+    starters.forEach(function (s) {
+      if (out.length < 4 && !out.some(function (x) { return x.q === s.q; })) out.push(s);
+    });
+    return out;
+  },
+
+  screen_debate: function () {
+    var st = DH.store.state, self = this, d = st.debate, t = DH.t;
+    var p = st.prefs || {};
+
+    // Setup: pick a topic and a side.
+    if (!d || !d.side) {
+      var draft = self.debateDraft || {};
+      var topics = self.debateTopics();
+      var picked = topics.find(function (x) { return x.q === draft.topic; });
+      var sidesHtml = "";
+      if (picked) {
+        sidesHtml = p.debate === "assign"
+          ? "<p>" + t("Angada will assign you a side. You don't have to agree with it!") + "</p>"
+          : '<div class="opts">' + picked.sides.map(function (s) {
+              return '<button class="opt ' + (draft.side === s ? "sel" : "") + '" data-side="' + DH.esc(s) + '">' + t(s) + "</button>";
+            }).join("") + "</div>";
+      } else if (draft.custom) {
+        sidesHtml = '<label class="field"><span>' + t("Your position") + '</span><input id="dSide" maxlength="200" value="' + DH.esc(draft.side || "") + '" placeholder="' + DH.esc(DH.tr("The self is truly distinct from God")) + '"></label>';
+      }
+      return '<div class="debate-setup">' +
+        '<div class="ask-empty">' + DH.angada(100, "cheer") + '<h1 class="ask-title">' + t("Debate Angada") + "</h1><p>" +
+        t("Pick a question and a side. Angada argues the other side, one point at a time. He challenges arguments, never you.") + "</p></div>" +
+        (p.debate === "none" ? '<p class="small">' + t("You chose 'no debates' for lessons, but you can still debate here any time.") + "</p>" : "") +
+        "<h2>" + t("1. Pick a question") + '</h2><div class="opts">' +
+        topics.map(function (x) { return '<button class="opt ' + (draft.topic === x.q ? "sel" : "") + '" data-topic="' + DH.esc(x.q) + '">' + t(x.q) + "</button>"; }).join("") +
+        '<button class="opt ' + (draft.custom ? "sel" : "") + '" id="custom"><i class="ti ti-pencil"></i> ' + t("My own question") + "</button></div>" +
+        (draft.custom ? '<label class="field"><span>' + t("Your question") + '</span><input id="dTopic" maxlength="300" value="' + DH.esc(draft.topic || "") + '" placeholder="' + DH.esc(DH.tr("Is the world real?")) + '"></label>' : "") +
+        (picked || draft.custom ? "<h2>" + t("2. Your side") + "</h2>" + sidesHtml : "") +
+        '<div class="err" id="err"></div>' +
+        '<button class="btn primary wide" id="startDeb"><i class="ti ti-swords"></i> ' + t("Start debate") + "</button></div>";
+    }
+
+    // Active or finished debate.
+    var msgs = d.msgs.map(function (m) { return self.bubble(Object.assign({ mood: "cheer" }, m)); }).join("");
+    var start = !d.msgs.length
+      ? '<div class="debate-note">' + t("Make your opening argument for your side, or let Angada go first.") + ' <button class="link" id="angFirst">' + t("Angada goes first") + "</button></div>" : "";
+    var summary = d.summary
+      ? '<div class="summary-card"><div class="sum-head">' + DH.angada(44, "happy") + "<b>" + t("Debate summary") + '</b></div><div dir="auto">' + self.renderAnswer(d.summary) + "</div></div>" : "";
+    return '<div class="ask">' +
+      '<div class="debate-head"><div><small>' + t("Debate") + "</small><b>" + DH.esc(d.topic) + '</b><span class="pill saffron">' + t("Your side:") + " " + DH.esc(d.side) + "</span></div></div>" +
+      '<div class="msgs" id="msgs">' + start + msgs + summary + self.typing() + "</div>" +
+      (d.summary
+        ? '<button class="btn primary wide" id="newDeb"><i class="ti ti-plus"></i> ' + t("New debate") + "</button>"
+        : '<div class="notice"><i class="ti ti-info-circle"></i> ' + t("Answers can be wrong. Check the cited sources.") +
+          (d.msgs.length >= 2 ? ' <button class="link" id="endDeb">' + t("End debate and see summary") + "</button>" : "") +
+          ' <button class="link" id="quitDeb">' + t("Change topic") + "</button></div>" +
+          '<form class="composer" id="composer"><textarea id="q" rows="1" maxlength="1000" placeholder="' + DH.esc(DH.tr(d.msgs.length ? "Your reply..." : "Your opening argument...")) + '" dir="auto"></textarea>' +
+          '<button class="send" aria-label="Send"><i class="ti ti-send"></i></button></form><div class="err" id="err"></div>') +
+      "</div>";
+  },
+
+  bind_debate: function () {
+    var self = this, st = DH.store.state, d = st.debate, p = st.prefs || {};
+    var err = function (m) { var e = document.getElementById("err"); if (e) e.textContent = DH.tr(m); };
+
+    if (!d || !d.side) {
+      self.debateDraft = self.debateDraft || {};
+      var draft = self.debateDraft;
+      var topics = self.debateTopics();
+      document.querySelectorAll("[data-topic]").forEach(function (b) {
+        b.onclick = function () { self.debateDraft = { topic: b.dataset.topic }; self.go("debate"); };
+      });
+      document.getElementById("custom").onclick = function () { self.debateDraft = { custom: true }; self.go("debate"); };
+      document.querySelectorAll("[data-side]").forEach(function (b) {
+        b.onclick = function () {
+          draft.side = b.dataset.side;
+          document.querySelectorAll("[data-side]").forEach(function (x) { x.classList.remove("sel"); });
+          b.classList.add("sel");
+          err("");
+        };
+      });
+      document.getElementById("startDeb").onclick = function () {
+        if (draft.custom) {
+          draft.topic = (document.getElementById("dTopic") || {}).value || "";
+          draft.side = (document.getElementById("dSide") || {}).value || draft.side || "";
+          draft.topic = draft.topic.trim(); draft.side = draft.side.trim();
+          if (!draft.topic) return err("Type your question first");
+          if (!draft.side) return err("Type the position you'll defend");
+        } else {
+          var picked = topics.find(function (x) { return x.q === draft.topic; });
+          if (!picked) return err("Pick a question first");
+          if (p.debate === "assign") draft.side = picked.sides[Math.floor(Math.random() * picked.sides.length)];
+          if (!draft.side) return err("Pick a side first");
+        }
+        st.debate = { topic: draft.topic, side: draft.side, msgs: [], summary: null };
+        self.debateDraft = null;
+        DH.store.save();
+        self.go("debate");
+      };
+      return;
+    }
+
+    var history = function () {
+      return d.msgs.filter(function (m) { return !m.offline && !m.error; }).map(function (m) { return { role: m.role, text: m.text }; });
     };
+    var turn = function (message) {
+      var h = history();
+      if (message) d.msgs.push({ role: "user", text: message });
+      DH.store.save();
+      self.go("debate");
+      self.showTyping();
+      DH.ai.debate({ topic: d.topic, side: d.side, message: message, history: h }).then(function (r) {
+        d.msgs.push(r.offline ? { role: "bot", offline: true, ids: r.ids } : { role: "bot", text: r.text });
+      }).catch(function () {
+        d.msgs.push({ role: "bot", error: true, text: self.aiError() });
+      }).then(function () {
+        d.msgs = d.msgs.slice(-30);
+        DH.store.save();
+        if (self.tab === "debate") self.go("debate");
+      });
+    };
+
+    if (document.getElementById("composer")) self.bindComposer(turn, "Type your argument first");
+    if (document.getElementById("angFirst")) document.getElementById("angFirst").onclick = function () { turn(""); };
+    if (document.getElementById("quitDeb")) document.getElementById("quitDeb").onclick = function () {
+      st.debate = null; DH.store.save(); self.go("debate");
+    };
+    if (document.getElementById("newDeb")) document.getElementById("newDeb").onclick = function () {
+      st.debate = null; DH.store.save(); self.go("debate");
+    };
+    if (document.getElementById("endDeb")) document.getElementById("endDeb").onclick = function () {
+      self.go("debate");
+      self.showTyping();
+      DH.ai.debate({ topic: d.topic, side: d.side, history: history(), action: "summary" }).then(function (r) {
+        d.summary = r.offline ? DH.tr("Summaries need dharmAI's AI to be connected.") : r.text;
+      }).catch(function () {
+        d.msgs.push({ role: "bot", error: true, text: self.aiError() });
+      }).then(function () {
+        DH.store.save();
+        if (self.tab === "debate") self.go("debate");
+      });
+    };
+    window.scrollTo(0, document.body.scrollHeight);
   },
 
   // ---------- Profile ----------
@@ -422,7 +710,16 @@ DH.app = {
     };
     var lessons = 0;
     Object.keys(st.progress).forEach(function (k) { lessons += st.progress[k].done.length; });
-    return '<div class="me-head">' + DH.angada(90, "happy") + "<div><h1>" + t("Your profile") + "</h1><p>" + t("Everything is saved only on this device. No account needed.") + "</p></div></div>" +
+    var acc = st.account;
+    var accountCard = acc
+      ? '<div class="acc-card"><i class="ti ti-user-check"></i><div><b>' + DH.esc(acc.username) + "</b><span>" + t("Signed in. Your progress syncs to any device you log in on.") + "</span></div></div>" +
+        '<div class="acc-actions"><button class="btn small" id="logout"><i class="ti ti-logout"></i> ' + t("Log out") + "</button></div>"
+      : DH.ai.configured()
+        ? '<div class="acc-card guest"><i class="ti ti-cloud-upload"></i><div><b>' + t("Playing as a guest") + "</b><span>" + t("Your progress is only on this device. Create a free account to keep it safe and use it anywhere. No email needed.") + "</span></div></div>" +
+          '<div class="acc-actions"><button class="btn primary small" id="signup">' + t("Create account") + '</button><button class="btn small" id="login">' + t("Log in") + "</button></div>"
+        : "";
+    return '<div class="me-head">' + DH.angada(90, "happy") + "<div><h1>" + (acc ? DH.esc(acc.username) : t("Your profile")) + "</h1></div></div>" +
+      accountCard +
       '<div class="stats"><div class="stat fire"><span>' + t("Day streak") + "</span><b>" + st.streak + '</b></div><div class="stat xp"><span>' + t("Total XP") + "</span><b>" + st.xp + '</b></div><div class="stat acc"><span>' + t("Lessons") + "</span><b>" + lessons + "</b></div></div>" +
       "<h2>" + t("Preferences") + "</h2>" +
       '<label class="field"><span>' + t("Language") + '</span><select data-pref="lang">' + DH.LANGUAGES.map(function (l) {
@@ -434,7 +731,9 @@ DH.app = {
       '<label class="field"><span>' + t("Debates") + "</span>" + sel("debate", [["choose", "Yes, I pick my side"], ["assign", "Yes, assign me a side"], ["both", "Yes, let me argue both sides"], ["none", "No debates, just lessons"]]) + "</label>" +
       '<p class="small" id="saved"></p>' +
       "<h2>" + t("About dharmAI") + "</h2><p>" + t("dharmAI teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
-      '<button class="btn danger" id="reset"><i class="ti ti-trash"></i> ' + t("Reset all progress") + "</button>";
+      "<h2>" + t("Privacy") + "</h2><p class=\"small\">" + t("Accounts need only a username and password. Passwords are stored scrambled, so nobody can read them. Your progress and chats are stored to sync your account; don't put personal information in them.") + "</p>" +
+      '<div class="danger-zone"><button class="btn danger small" id="reset"><i class="ti ti-refresh"></i> ' + t("Reset all progress") + "</button>" +
+      (acc ? '<button class="btn danger small" id="delAcc"><i class="ti ti-trash"></i> ' + t("Delete my account") + "</button>" : "") + "</div>";
   },
 
   bind_me: function () {
@@ -447,12 +746,32 @@ DH.app = {
         document.getElementById("saved").textContent = DH.tr("Saved");
       };
     });
-    document.getElementById("reset").onclick = function () {
-      if (confirm(DH.tr("Reset everything? Your XP, streak, progress and preferences will be erased from this device."))) {
+    var on = function (id, fn) { var el = document.getElementById(id); if (el) el.onclick = fn; };
+    on("signup", function () { self.auth("signup"); });
+    on("login", function () { self.auth("login"); });
+    on("logout", function () {
+      if (!confirm(DH.tr("Log out? Your progress stays saved in your account."))) return;
+      DH.account.logout().then(function () { self.onboard(0, {}); });
+    });
+    on("delAcc", function () {
+      var pw = prompt(DH.tr("This permanently deletes your account and all its progress. Type your password to confirm."));
+      if (!pw) return;
+      DH.account.call("/account/delete", { password: pw }).then(function () {
         DH.store.reset();
+        self.toast(DH.tr("Account deleted"));
         self.onboard(0, {});
-      }
-    };
+      }).catch(function (e) { alert(DH.tr(e.message)); });
+    });
+    on("reset", function () {
+      var msg = st.account
+        ? "Reset your progress? Your XP, streak, lessons and preferences will be erased from your account."
+        : "Reset everything? Your XP, streak, progress and preferences will be erased from this device.";
+      if (!confirm(DH.tr(msg))) return;
+      var account = st.account;
+      DH.store.reset();
+      if (account) { DH.store.state.account = account; DH.store.save(); }
+      self.onboard(account ? 1 : 0, {});
+    });
   }
 };
 

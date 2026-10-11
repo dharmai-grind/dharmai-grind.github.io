@@ -11,25 +11,115 @@ DH.today = function () {
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 };
 
-// ---------- Saved state (only on this device) ----------
+// ---------- Saved state ----------
+// Always kept on this device. If you're logged in, it's also synced to your
+// account so it follows you to other devices.
 DH.store = {
   KEY: "dharmai-state-v1",
   state: null,
   fresh: function () {
-    return { prefs: null, courses: [], active: null, progress: {}, xp: 0, streak: 0, lastDay: null, chat: [] };
+    return {
+      prefs: null, courses: [], active: null, progress: {}, xp: 0, streak: 0, lastDay: null,
+      ask: [],          // Ask chat
+      debate: null,     // current debate: { topic, side, sides, msgs, summary }
+      account: null,    // { username, token } when logged in
+      updatedAt: 0
+    };
   },
   load: function () {
     var s = null;
     try { s = JSON.parse(localStorage.getItem(this.KEY)); } catch (e) { s = null; }
     this.state = Object.assign(this.fresh(), s || {});
+    // Older versions kept one shared chat.
+    if (this.state.chat) {
+      this.state.ask = this.state.chat.filter(function (m) { return m.mode !== "debate"; });
+      delete this.state.chat;
+    }
     return this.state;
   },
-  save: function () {
+  // quiet = save locally without syncing (used when the change came from the server).
+  save: function (quiet) {
+    if (!quiet) this.state.updatedAt = Date.now();
     try { localStorage.setItem(this.KEY, JSON.stringify(this.state)); } catch (e) { }
+    if (!quiet) DH.account.pushSoon();
   },
   reset: function () {
     this.state = this.fresh();
-    this.save();
+    this.save(true);
+  },
+  // The part of the state that belongs to the account (not the login itself).
+  portable: function () {
+    var s = Object.assign({}, this.state);
+    delete s.account;
+    return s;
+  }
+};
+
+// ---------- Accounts (username + password, no email) ----------
+DH.account = {
+  timer: null,
+  call: function (path, body) {
+    var acc = DH.store.state.account;
+    var headers = { "Content-Type": "application/json" };
+    if (acc && acc.token) headers.Authorization = "Bearer " + acc.token;
+    return fetch(DH.config.WORKER_URL.replace(/\/$/, "") + path, { method: "POST", headers: headers, body: JSON.stringify(body || {}) })
+      .then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (j) {
+          if (r.status === 401 && acc && path.indexOf("/progress") === 0) DH.account.expired();
+          if (!r.ok) throw new Error(j.error || ("Something went wrong (" + r.status + ")"));
+          return j;
+        });
+      });
+  },
+  loggedIn: function () { return !!(DH.store.state.account && DH.store.state.account.token); },
+  // After sign-up or login: keep whichever progress is newer and more complete.
+  start: function (res) {
+    var st = DH.store.state;
+    st.account = { username: res.username, token: res.token };
+    DH.store.save(true);
+    return DH.account.call("/progress/get").then(function (j) {
+      var local = DH.store.portable();
+      var hasLocal = !!local.prefs;
+      if (j.state && j.state.prefs && (!hasLocal || j.state.xp >= local.xp || j.updated > local.updatedAt)) {
+        DH.store.state = Object.assign(DH.store.fresh(), j.state, { account: st.account });
+        DH.store.save(true);
+        return "server";
+      }
+      if (hasLocal) return DH.account.push().then(function () { return "local"; });
+      return "empty";
+    });
+  },
+  // On app start: pick up progress made on another device.
+  pull: function () {
+    if (!DH.account.loggedIn() || !DH.ai.configured()) return Promise.resolve(false);
+    return DH.account.call("/progress/get").then(function (j) {
+      if (j.state && j.updated > (DH.store.state.updatedAt || 0)) {
+        DH.store.state = Object.assign(DH.store.fresh(), j.state, { account: DH.store.state.account });
+        DH.store.save(true);
+        return true;
+      }
+      if (!j.state || j.updated < DH.store.state.updatedAt) DH.account.push();
+      return false;
+    }).catch(function () { return false; });
+  },
+  push: function () {
+    if (!DH.account.loggedIn()) return Promise.resolve();
+    var s = DH.store.portable();
+    return DH.account.call("/progress/save", { state: s, updated: s.updatedAt || Date.now() }).catch(function () { });
+  },
+  pushSoon: function () {
+    if (!DH.account.loggedIn()) return;
+    clearTimeout(DH.account.timer);
+    DH.account.timer = setTimeout(DH.account.push, 1500);
+  },
+  logout: function () {
+    var done = function () { DH.store.reset(); };
+    return DH.account.call("/logout").then(done, done);
+  },
+  expired: function () {
+    DH.store.state.account = null;
+    DH.store.save(true);
+    DH.app.toast(DH.tr("You've been logged out. Log in again to keep syncing."));
   }
 };
 
@@ -166,34 +256,48 @@ DH.ai = {
   translate: function (lang, strings) {
     return this.post("/translate", { lang: DH.langInfo(lang).name, strings: strings }).then(function (j) { return j.strings; });
   },
-  // opts: { question, history, mode: "ask"|"debate", side, context }
-  ask: function (opts) {
+  // Finds the best passages for some text (the "retrieval" step).
+  retrieve: function (text) {
     var p = DH.store.state.prefs || {};
-    // The learner's tradition (e.g. "Vadakalai") also steers which sources come up.
-    var ids = DH.search(opts.question + " " + (opts.context || ""), 6, opts.boost || [], p.tradition || "");
-    var passages = ids.map(function (id) {
-      var s = DH.SOURCES[id];
-      return { id: id, kind: s.kind, title: DH.cite(id), sanskrit: s.iast || "", text: s.en };
+    // The learner's tradition (e.g. "Vadakalai") nudges which sources come up.
+    var ids = DH.search(text, 6, [], p.tradition || "");
+    return {
+      ids: ids,
+      passages: ids.map(function (id) {
+        var s = DH.SOURCES[id];
+        return { id: id, kind: s.kind, title: DH.cite(id), sanskrit: s.iast || "", text: s.en };
+      })
+    };
+  },
+  profile: function () {
+    var p = DH.store.state.prefs || {};
+    return { school: p.school || "", tradition: p.tradition || "", language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both" };
+  },
+  // Only keep citations that really are in the passages we sent.
+  clean: function (answer, ids) {
+    return String(answer || "").replace(/\[\[([\w.\-]+)\]\]/g, function (m, id) {
+      return ids.indexOf(id) >= 0 ? "[[" + id + "]]" : "";
     });
-    if (!this.configured()) {
-      return Promise.resolve({ offline: true, ids: ids });
-    }
+  },
+  // Tutor. opts: { question, history }
+  ask: function (opts) {
+    var self = this, r = this.retrieve(opts.question);
+    if (!this.configured()) return Promise.resolve({ offline: true, ids: r.ids });
     return this.post("/ask", {
-      question: opts.question,
-      history: (opts.history || []).slice(-8),
-      mode: opts.mode || "ask",
-      side: opts.side || "",
-      passages: passages,
-      profile: {
-        school: p.school || "", tradition: p.tradition || "",
-        language: DH.langInfo(p.lang || "en").name, focus: p.focus || "both"
-      }
-    }).then(function (j) {
-      // Only keep citations that really are in the passages we sent.
-      var text = String(j.answer || "").replace(/\[\[([\w.\-]+)\]\]/g, function (m, id) {
-        return ids.indexOf(id) >= 0 ? "[[" + id + "]]" : "";
-      });
-      return { text: text, ids: ids };
-    });
+      question: opts.question, history: (opts.history || []).slice(-10),
+      passages: r.passages, profile: this.profile()
+    }).then(function (j) { return { text: self.clean(j.answer, r.ids) }; });
+  },
+  // Debate partner. opts: { topic, side, message, history, action }
+  debate: function (opts) {
+    var self = this;
+    var last = (opts.history || []).slice(-2).map(function (m) { return m.text; }).join(" ");
+    var r = this.retrieve(opts.topic + " " + opts.side + " " + (opts.message || "") + " " + last);
+    if (!this.configured()) return Promise.resolve({ offline: true, ids: r.ids });
+    return this.post("/debate", {
+      topic: opts.topic, side: opts.side, message: opts.message || "", action: opts.action || "turn",
+      style: (DH.store.state.prefs || {}).debate || "choose",
+      history: (opts.history || []).slice(-10), passages: r.passages, profile: this.profile()
+    }).then(function (j) { return { text: self.clean(j.answer, r.ids) }; });
   }
 };

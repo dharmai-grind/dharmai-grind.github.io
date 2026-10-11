@@ -36,6 +36,17 @@ The AI runs on Cloudflare Workers AI (free daily allowance), using the open Gemm
 3. Open the Worker's **Settings**, then **Bindings**, **Add binding**, **Workers AI**. Name it `AI`, then save and deploy.
 4. Copy the Worker's address (like `https://dharmai.<something>.workers.dev`) into `WORKER_URL` in `js/config.js`.
 
+## Accounts (free)
+
+Accounts use a free Cloudflare D1 database: username + password only, no email.
+Passwords and recovery codes are stored as salted hashes; nobody can read them.
+
+1. In Cloudflare, go to **Storage & Databases → D1 SQL Database → Create**, and name it `dharmai-db`.
+2. Open the Worker, then **Settings → Bindings → Add binding → D1 database**. Name it `DB`, pick `dharmai-db`, and deploy.
+3. That's it. The Worker creates its tables automatically on first use.
+
+Whenever `worker/worker.js` changes, paste the new version into the Worker's code editor and click **Deploy**.
+
 Free-tier limits apply. If lots of people use it in one day, the tutor may say "try again later."
 If Cloudflare retires the default model, set an `AI_MODEL` variable on the Worker to another model from developers.cloudflare.com/workers-ai/models.
 
