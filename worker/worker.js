@@ -49,22 +49,53 @@ export default {
   },
 };
 
-// messages: [{ role: "user" | "assistant", content }]
-async function llm(env, system, messages, maxTokens) {
-  const model = env.AI_MODEL || "@cf/google/gemma-4-26b-a4b-it";
-  const out = await env.AI.run(model, {
-    messages: [{ role: "system", content: system }, ...messages],
-    max_tokens: maxTokens || 1200,
-    temperature: 0.4,
-  });
-  // Different models answer in slightly different shapes.
+const MAIN_MODEL = "@cf/google/gemma-4-26b-a4b-it";
+const BACKUP_MODEL = "@cf/meta/llama-4-scout-17b-16e-instruct";
+
+// Pull the reply text out of whatever shape the model returns.
+function readText(out) {
   let text = "";
   if (typeof out === "string") text = out;
   else if (out && typeof out.response === "string") text = out.response;
-  else if (out && out.choices && out.choices[0]) text = (out.choices[0].message && out.choices[0].message.content) || out.choices[0].text || "";
-  else if (out && out.response && typeof out.response === "object") text = JSON.stringify(out.response);
+  else if (out && out.choices && out.choices[0]) {
+    const c = out.choices[0];
+    text = (c.message && c.message.content) || c.text || "";
+  } else if (out && out.response && typeof out.response === "object") text = JSON.stringify(out.response);
   // Drop any visible "thinking" from reasoning models.
-  return String(text).replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+  return String(text || "").replace(/<think>[\s\S]*?<\/think>/g, "").trim();
+}
+
+// Short description of an empty/odd reply, for debugging.
+function describe(out) {
+  try {
+    const c = out && out.choices && out.choices[0];
+    return JSON.stringify({ keys: Object.keys(out || {}), finish: c && c.finish_reason, usage: out && out.usage }).slice(0, 400);
+  } catch { return "unreadable"; }
+}
+
+// messages: [{ role: "user" | "assistant", content }]
+// Tries the main model (thinking off), then the backup model if the reply is empty.
+async function llm(env, system, messages, maxTokens) {
+  const all = [{ role: "system", content: system }, ...messages];
+  const models = [env.AI_MODEL || MAIN_MODEL, BACKUP_MODEL];
+  const notes = [];
+  for (const model of models) {
+    try {
+      const out = await env.AI.run(model, {
+        messages: all,
+        max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
+        temperature: 0.4,
+        chat_template_kwargs: { enable_thinking: false },
+      });
+      const text = readText(out);
+      if (text) return text;
+      notes.push(model + " empty " + describe(out));
+    } catch (e) {
+      notes.push(model + " error " + String(e.message || e).slice(0, 200));
+    }
+  }
+  throw new Error("No answer from AI: " + notes.join(" | "));
 }
 
 const clip = (s, n) => String(s || "").slice(0, n);
@@ -105,7 +136,7 @@ ${lib || "(no matching passages)"}`;
   // The conversation should start with a user turn.
   while (messages.length && messages[0].role !== "user") messages.shift();
 
-  const answer = await llm(env, system, messages, 900);
+  const answer = await llm(env, system, messages, 1500);
   return { answer };
 }
 
@@ -113,7 +144,7 @@ async function translate(body, env) {
   const strings = (body.strings || []).slice(0, 60).map((s) => clip(s, 1500));
   const lang = clip(body.lang, 40);
   const system = `Translate each string in the JSON array into ${lang}. Rules: return ONLY a JSON array of the same length and order. Keep proper names and technical terms (Brahman, Rāmānuja, Vedānta, prapatti, etc.) recognisable, transliterated into ${lang}'s script if it doesn't use the Latin alphabet. Keep line breaks (\\n) and bullet characters (•). Keep the tone friendly and simple, suitable for kids and teens. Do not add explanations.`;
-  const out = await llm(env, system, [{ role: "user", content: JSON.stringify(strings) }], 3000);
+  const out = await llm(env, system, [{ role: "user", content: JSON.stringify(strings) }], 4000);
   let arr;
   try {
     // Take the JSON array even if the model wrapped it in ```json fences.

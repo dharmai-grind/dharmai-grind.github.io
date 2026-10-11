@@ -4,7 +4,7 @@
 // progress, verse search), the AI tutor and translation just stay offline.
 window.DH = window.DH || {};
 DH.config = {
-  WORKER_URL: "",
+  WORKER_URL: "https://dharmai.ananya-s13156.workers.dev",
   APP_NAME: "dharmAI",
   // Sharada Navaratri dates (first day to Vijayadashami). Add a line each year.
   NAVARATRI: [
