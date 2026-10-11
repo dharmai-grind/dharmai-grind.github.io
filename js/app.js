@@ -7,6 +7,7 @@ DH.app = {
     var self = this;
     DH.store.load();
     DH.i18n.loadCache();
+    DH.voice.init();
     this.applyDir();
     if (!DH.store.state.prefs) this.onboard(0, {});
     else this.go(this.tab);
@@ -293,6 +294,7 @@ DH.app = {
 
   // ---------- Shell ----------
   go: function (tab) {
+    if (this.tab !== tab) DH.voice.stop();
     this.tab = tab;
     var self = this, rerender = function () { self.go(tab); };
     var content = this["screen_" + tab]();
@@ -503,7 +505,8 @@ DH.app = {
         (m.ids.length ? m.ids.map(function (id) { return '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>"; }).join(" ")
           : "<p>" + DH.t("Nothing in the library matched. Try other words.") + "</p>")
       : m.error ? '<p class="err">' + DH.esc(m.text) + "</p>" : '<div dir="auto">' + this.renderAnswer(m.text) + "</div>";
-    return '<div class="msg bot">' + DH.angada(34, m.mood || "happy") + '<div class="bot-body">' + body + "</div></div>";
+    var say = !m.offline && !m.error ? DH.voice.button([{ text: this.delatex(m.text) }], "Read this answer aloud") : "";
+    return '<div class="msg bot">' + DH.angada(34, m.mood || "happy") + '<div class="bot-body">' + say + body + "</div></div>";
   },
 
   typing: function () {
@@ -700,7 +703,7 @@ DH.app = {
     var start = !d.msgs.length
       ? '<div class="debate-note">' + t("Make your opening argument for your side, or let Angada go first.") + ' <button class="link" id="angFirst">' + t("Angada goes first") + "</button></div>" : "";
     var summary = d.summary
-      ? '<div class="summary-card"><div class="sum-head">' + DH.angada(44, "happy") + "<b>" + t("Debate summary") + '</b></div><div dir="auto">' + self.renderAnswer(d.summary) + "</div></div>" : "";
+      ? '<div class="summary-card"><div class="sum-head">' + DH.angada(44, "happy") + "<b>" + t("Debate summary") + "</b>" + DH.voice.button([{ text: self.delatex(d.summary) }], "Read the summary aloud") + '</div><div dir="auto">' + self.renderAnswer(d.summary) + "</div></div>" : "";
     return '<div class="ask">' +
       '<div class="debate-head"><div><small>' + t("Debate") + "</small><b>" + DH.esc(d.topic) + '</b><span class="pill saffron">' + t("Your side:") + " " + DH.esc(d.side) + "</span></div></div>" +
       '<div class="msgs" id="msgs">' + start + msgs + summary + self.typing() + "</div>" +
@@ -812,6 +815,7 @@ DH.app = {
   // ---------- Profile ----------
   screen_me: function () {
     var st = DH.store.state, p = st.prefs, t = DH.t;
+    if (!p.rate) p.rate = "1"; // so the speed menu shows "Normal" by default
     var sel = function (key, options) {
       return '<select data-pref="' + key + '">' + options.map(function (o) {
         return '<option value="' + o[0] + '"' + (p[key] === o[0] ? " selected" : "") + ">" + t(o[1]) + "</option>";
@@ -838,6 +842,18 @@ DH.app = {
       '<label class="field"><span>' + t("Lesson length") + "</span>" + sel("length", [["short", "About 2 minutes"], ["medium", "About 5 minutes"], ["long", "10 minutes or more"]]) + "</label>" +
       '<label class="field"><span>' + t("More of") + "</span>" + sel("focus", [["think", "Critical thinking"], ["trivia", "Trivia"], ["both", "Both"]]) + "</label>" +
       '<label class="field"><span>' + t("Debates") + "</span>" + sel("debate", [["choose", "Yes, I pick my side"], ["assign", "Yes, assign me a side"], ["both", "Yes, let me argue both sides"], ["none", "No debates, just lessons"]]) + "</label>" +
+      (function () {
+        if (!DH.voice.supported) return "";
+        var voices = DH.voice.forLang(DH.lang());
+        var cur = p.voice || "auto";
+        return '<label class="field"><span>' + t("Read-aloud voice") + '</span><select data-pref="voice">' +
+          '<option value="auto"' + (cur === "auto" ? " selected" : "") + ">" + t("Automatic (best on this device)") + (voices[0] ? ": " + DH.esc(voices[0].name) : "") + "</option>" +
+          voices.map(function (v) { return '<option value="' + DH.esc(v.voiceURI) + '"' + (cur === v.voiceURI ? " selected" : "") + ">" + DH.esc(v.name + " (" + v.lang + ")") + "</option>"; }).join("") +
+          "</select></label>" +
+          (voices.length ? "" : '<p class="small warn">' + t("Your device has no voice for this language yet. You can add one in your device's language or speech settings.") + "</p>") +
+          '<div class="voice-row"><label class="field"><span>' + t("Reading speed") + "</span>" + sel("rate", [["0.85", "Slower"], ["1", "Normal"], ["1.15", "Faster"]]) + "</label>" +
+          '<button class="btn small" id="testVoice"><i class="ti ti-volume"></i> ' + t("Test") + "</button></div>";
+      })() +
       // Special settings: folded away; one fold per course that has unit levels.
       (function () {
         var topics = DH.app.allTopics().filter(function (x) { return st.courses.indexOf(x.course) >= 0; });
@@ -882,6 +898,10 @@ DH.app = {
       };
     });
     var on = function (id, fn) { var el = document.getElementById(id); if (el) el.onclick = fn; };
+    on("testVoice", function () {
+      DH.voice.say([{ text: DH.tr("Namaste! I'm Angada. This is how I'll read your lessons, like the names Rāmānuja, Śaṅkara and Mahiṣāsura.") },
+        { text: "सत्यं ज्ञानमनन्तं ब्रह्म", lang: "hi" }], document.getElementById("testVoice"));
+    });
     on("signup", function () { self.auth("signup"); });
     on("login", function () { self.auth("login"); });
     on("logout", function () {

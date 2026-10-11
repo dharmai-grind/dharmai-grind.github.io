@@ -62,7 +62,8 @@ DH.LESSON_UI = ["Continue", "Check", "True", "False", "Try again", "Not quite", 
   "Pick a side first", "Pick the side you want to defend.", "Pick a side to start with. You'll argue both.",
   "Angada assigned you a side. You don't have to agree with it!", "Lesson complete!", "XP", "Accuracy", "Streak",
   "You saved these for DHARMAi:", "Machine translated", "Summary, not a quote", "Tradition",
-  "Quit this lesson? Your progress in it won't be saved."];
+  "Quit this lesson? Your progress in it won't be saved.", "Read this card aloud", "True or false?",
+  "Listen to the original and its meaning", "Read aloud"];
 DH.lessonStrings = function (cards) {
   var out = DH.LESSON_UI.slice();
   cards.forEach(function (c) {
@@ -112,7 +113,9 @@ DH.sourceBox = function (id) {
   var s = DH.SOURCES[id];
   if (!s) return "";
   var label = s.kind === "summary" ? "Summary, not a quote" : s.kind === "tradition" ? "Tradition" : "";
-  return '<div class="verse">' +
+  // Read aloud: the original (in its own language), then the meaning.
+  var sayParts = (s.sa ? [{ text: s.sa.replace(/…/g, ""), lang: DH.voice.verseLang(s) }] : []).concat([{ text: DH.tr(s.en) }]);
+  return '<div class="verse">' + DH.voice.button(sayParts, s.sa ? "Listen to the original and its meaning" : "Read aloud") +
     (s.sa ? '<div class="sa" lang="' + (s.olang || "sa") + '">' + DH.esc(s.sa) + '</div><div class="iast">' + DH.esc(s.iast) + "</div>" : "") +
     '<div class="vtr">' + DH.t(s.en) + "</div>" +
     '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) +
@@ -150,15 +153,31 @@ DH.Lesson.prototype.start = function () {
   DH.prefetchTr(DH.lessonStrings(self.queue)).then(function () { self.render(); });
 };
 
+// What the card's speaker button reads.
+DH.cardSpeech = function (c) {
+  var t = DH.tr, out = [];
+  var list = function (items) { return items.map(function (x, i) { return (i + 1) + ". " + t(x); }).join(". "); };
+  if (c.t === "teach") out.push(t(c.title) + ". " + t(c.body));
+  else if (c.t === "mcq") out.push(t(c.q) + " " + list((c.order || c.opts.map(function (_, i) { return i; })).map(function (i) { return c.opts[i]; })));
+  else if (c.t === "tf") out.push(t("True or false?") + " " + t(c.q));
+  else if (c.t === "order") out.push(t(c.q) + ". " + list(c.items));
+  else if (c.t === "match") out.push(t(c.q) + ". " + c.pairs.map(function (p) { return t(p[0]); }).join(", ") + ". " + c.pairs.map(function (p) { return t(p[1]); }).join(", "));
+  else if (c.t === "debate") out.push(t(c.q) + " " + list(c.sides));
+  else out.push(t(c.q));
+  return out.map(function (x) { return { text: x }; });
+};
+
 DH.Lesson.prototype.render = function () {
   var self = this, c = self.queue[self.i];
+  DH.voice.stop();
   if (!c) return self.finish();
   var pct = Math.round((self.i / self.queue.length) * 100);
+  var view = self["view_" + c.t](c); // build first, so shuffled options exist for read-aloud
   var html = '<div class="lesson">' +
     '<div class="lesson-top"><button class="icon-btn" id="quit" aria-label="Quit lesson"><i class="ti ti-x"></i></button>' +
-    '<div class="bar"><div style="width:' + pct + '%"></div></div></div>' +
+    '<div class="bar"><div style="width:' + pct + '%"></div></div>' + DH.voice.button(DH.cardSpeech(c), "Read this card aloud") + "</div>" +
     (DH.lang() !== "en" && DH.ai.configured() ? '<div class="mt-note">' + DH.t("Machine translated") + "</div>" : "") +
-    '<div class="card-body" id="cardBody">' + self["view_" + c.t](c) + "</div>" +
+    '<div class="card-body" id="cardBody">' + view + "</div>" +
     '<div class="lesson-foot" id="foot"></div></div>';
   self.root.innerHTML = html;
   document.getElementById("quit").onclick = function () {

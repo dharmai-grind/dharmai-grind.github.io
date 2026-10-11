@@ -254,6 +254,20 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .danger-zone { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .toast { position: fixed; bottom: 96px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 14px; font-weight: 700; font-size: 0.9rem; z-index: 40; max-width: 90vw; text-align: center; }
 
+/* read-aloud */
+.say-btn { flex: none; width: 38px; height: 38px; border-radius: 50%; border: 2px solid var(--line); background: var(--card); color: var(--blue); font-size: 1.2rem; display: inline-flex; align-items: center; justify-content: center; }
+.say-btn.speaking { background: var(--blue); border-color: var(--blue); color: #fff; animation: pulse 1s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+.verse { position: relative; }
+.verse .say-btn { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; font-size: 1rem; }
+.verse .sa { padding-right: 36px; }
+.bot-body { position: relative; }
+.bot-body .say-btn { float: right; width: 30px; height: 30px; font-size: 0.95rem; margin: -2px -4px 4px 8px; }
+.sum-head .say-btn { margin-left: auto; width: 32px; height: 32px; font-size: 1rem; }
+.voice-row { display: flex; gap: 10px; align-items: flex-end; }
+.voice-row .field { flex: 1; margin-bottom: 10px; }
+.voice-row .btn { margin-bottom: 10px; }
+
 /* folding sections (Special settings) */
 .fold { border: 2px solid var(--line); border-radius: 16px; margin: 14px 0 4px; background: var(--card); }
 .fold summary { cursor: pointer; padding: 12px 14px; font-weight: 800; list-style: none; display: flex; align-items: center; gap: 8px; }
