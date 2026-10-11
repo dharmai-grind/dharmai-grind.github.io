@@ -1,11 +1,12 @@
-// dharmAI AI Worker (runs free on Cloudflare Workers).
-// It keeps the Gemini API key secret and forwards two kinds of requests:
+// dharmAI AI Worker (runs free on Cloudflare Workers, using Cloudflare's own
+// Workers AI, so there's no outside API key). Two kinds of requests:
 //   POST /ask        -> answer a question, citing only the passages sent with it
 //   POST /translate  -> translate a batch of app strings
-// Settings (Cloudflare dashboard -> Worker -> Settings -> Variables):
-//   GEMINI_API_KEY   (secret)  key from aistudio.google.com
-//   GEMINI_MODEL     (optional) defaults to gemini-2.5-flash
-//   ALLOWED_ORIGINS  (optional) comma-separated, defaults to the site below
+// Setup (Cloudflare dashboard -> this Worker -> Settings -> Bindings):
+//   add a "Workers AI" binding named AI
+// Optional variables (Settings -> Variables and Secrets):
+//   AI_MODEL         defaults to @cf/google/gemma-4-26b-a4b-it
+//   ALLOWED_ORIGINS  comma-separated, defaults to the site below
 
 const DEFAULT_ORIGINS = "https://dharmai-grind.github.io,http://localhost:8080";
 
@@ -26,7 +27,7 @@ export default {
 
     if (request.method !== "POST") return reply({ error: "Use POST" }, 405);
     if (!allowed.includes(origin)) return reply({ error: "Origin not allowed" }, 403);
-    if (!env.GEMINI_API_KEY) return reply({ error: "GEMINI_API_KEY is not set" }, 500);
+    if (!env.AI) return reply({ error: "Workers AI binding named AI is missing" }, 500);
 
     let body;
     try {
@@ -48,21 +49,22 @@ export default {
   },
 };
 
-async function gemini(env, system, contents, json) {
-  const model = env.GEMINI_MODEL || "gemini-2.5-flash";
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
-      contents,
-      generationConfig: { temperature: 0.4, maxOutputTokens: 1200, ...(json ? { responseMimeType: "application/json" } : {}) },
-    }),
+// messages: [{ role: "user" | "assistant", content }]
+async function llm(env, system, messages, maxTokens) {
+  const model = env.AI_MODEL || "@cf/google/gemma-4-26b-a4b-it";
+  const out = await env.AI.run(model, {
+    messages: [{ role: "system", content: system }, ...messages],
+    max_tokens: maxTokens || 1200,
+    temperature: 0.4,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error((data.error && data.error.message) || `Gemini error ${res.status}`);
-  const parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  return parts.map((p) => p.text || "").join("");
+  // Different models answer in slightly different shapes.
+  let text = "";
+  if (typeof out === "string") text = out;
+  else if (out && typeof out.response === "string") text = out.response;
+  else if (out && out.choices && out.choices[0]) text = (out.choices[0].message && out.choices[0].message.content) || out.choices[0].text || "";
+  else if (out && out.response && typeof out.response === "object") text = JSON.stringify(out.response);
+  // Drop any visible "thinking" from reasoning models.
+  return String(text).replace(/<think>[\s\S]*?<\/think>/g, "").trim();
 }
 
 const clip = (s, n) => String(s || "").slice(0, n);
@@ -95,15 +97,15 @@ DEBATE MODE: The learner wants a friendly debate. ${body.side ? `Their side: "${
 LIBRARY:
 ${lib || "(no matching passages)"}`;
 
-  const contents = [];
+  const messages = [];
   for (const m of (body.history || []).slice(-8)) {
-    contents.push({ role: m.role === "user" ? "user" : "model", parts: [{ text: clip(m.text, 2000) }] });
+    messages.push({ role: m.role === "user" ? "user" : "assistant", content: clip(m.text, 2000) });
   }
-  contents.push({ role: "user", parts: [{ text: clip(body.question, 1000) }] });
-  // Gemini needs the conversation to start with a user turn.
-  while (contents.length && contents[0].role !== "user") contents.shift();
+  messages.push({ role: "user", content: clip(body.question, 1000) });
+  // The conversation should start with a user turn.
+  while (messages.length && messages[0].role !== "user") messages.shift();
 
-  const answer = await gemini(env, system, contents, false);
+  const answer = await llm(env, system, messages, 900);
   return { answer };
 }
 
@@ -111,9 +113,13 @@ async function translate(body, env) {
   const strings = (body.strings || []).slice(0, 60).map((s) => clip(s, 1500));
   const lang = clip(body.lang, 40);
   const system = `Translate each string in the JSON array into ${lang}. Rules: return ONLY a JSON array of the same length and order. Keep proper names and technical terms (Brahman, Rāmānuja, Vedānta, prapatti, etc.) recognisable, transliterated into ${lang}'s script if it doesn't use the Latin alphabet. Keep line breaks (\\n) and bullet characters (•). Keep the tone friendly and simple, suitable for kids and teens. Do not add explanations.`;
-  const out = await gemini(env, system, [{ role: "user", parts: [{ text: JSON.stringify(strings) }] }], true);
+  const out = await llm(env, system, [{ role: "user", content: JSON.stringify(strings) }], 3000);
   let arr;
-  try { arr = JSON.parse(out); } catch { arr = []; }
+  try {
+    // Take the JSON array even if the model wrapped it in ```json fences.
+    const s = out.indexOf("["), e = out.lastIndexOf("]");
+    arr = JSON.parse(out.slice(s, e + 1));
+  } catch { arr = []; }
   if (!Array.isArray(arr) || arr.length !== strings.length) arr = strings.map(() => null);
   return { strings: arr };
 }

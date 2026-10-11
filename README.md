@@ -28,15 +28,16 @@ Add the new Navaratri dates to `js/config.js` so the "Happening now" badge shows
 
 ## Connecting the AI (free)
 
-1. Go to **aistudio.google.com** with the dharmAI email and click **Get API key**. Copy it, but don't paste it anywhere else.
-2. Go to **dash.cloudflare.com** with the same email, then **Workers & Pages**, **Create**, **Create Worker**. Name it `dharmai`, then **Deploy**.
-3. Click **Edit code**, delete what's there, paste everything from `worker/worker.js`, and click **Deploy**.
-4. Open the Worker's **Settings**, then **Variables and Secrets**, then **Add**. Type `Secret`, name `GEMINI_API_KEY`, and paste the key. Save.
-5. Copy the Worker's address (like `https://dharmai.<something>.workers.dev`) into `WORKER_URL` in `js/config.js`.
+The AI runs on Cloudflare Workers AI (free daily allowance), using the open Gemma model. No outside API key is needed.
+(We don't use the Gemini API: its terms require users to be 18+ and forbid sites likely to be used by under-18s.)
+
+1. Go to **dash.cloudflare.com**, then **Workers & Pages**, **Create**, **Create Worker**. Name it `dharmai`, then **Deploy**.
+2. Click **Edit code**, delete what's there, paste everything from `worker/worker.js`, and click **Deploy**.
+3. Open the Worker's **Settings**, then **Bindings**, **Add binding**, **Workers AI**. Name it `AI`, then save and deploy.
+4. Copy the Worker's address (like `https://dharmai.<something>.workers.dev`) into `WORKER_URL` in `js/config.js`.
 
 Free-tier limits apply. If lots of people use it in one day, the tutor may say "try again later."
-Google may use free-tier conversations to improve its products, which is why the app tells people not to share personal info.
-If Google retires the default model, set a `GEMINI_MODEL` variable on the Worker to a current free model name.
+If Cloudflare retires the default model, set an `AI_MODEL` variable on the Worker to another model from developers.cloudflare.com/workers-ai/models.
 
 ## Adding content
 
