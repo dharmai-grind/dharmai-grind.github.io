@@ -1,0 +1,13 @@
+{
+  "name": "dharmAI",
+  "short_name": "dharmAI",
+  "description": "Bite-sized lessons on Hindu philosophy, history, texts and festivals.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#1d9e75",
+  "icons": [
+    { "src": "icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
