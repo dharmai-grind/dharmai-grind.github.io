@@ -76,14 +76,37 @@ DH.voice = {
     ["ā", "a"], ["ī", "ee"], ["ū", "oo"], ["ē", "e"], ["ō", "o"],
     ["ḻ", "zh"], ["ṟ", "r"], ["ṉ", "n"]
   ],
+  // Tamil words: Tamil spelling doesn't show voicing, so apply Tamil allophony
+  // (Āṇṭāḷ is said "Andal"). A word counts as Tamil if it has Tamil-only letters
+  // (ḻ ṟ ṉ ē ō) or is in this list of Tamil names used in our lessons.
+  TAMIL_WORDS: ["āṇṭāḷ", "piḷḷai", "maṇavāḷa", "tiruppāvai", "tiruvaṇṇāmalai", "tirukkōṭṭiyūr", "nambi", "kōḻi", "nālāyira", "pōtuvīr"],
+  isTamil: function (lower) {
+    return /[ḻṟṉēō]/.test(lower) || this.TAMIL_WORDS.indexOf(lower) >= 0;
+  },
+  tamilVoicing: function (w) {
+    var V = "aāiīuūeēoō";
+    // 1. Doubled stops stay hard: protect them first.
+    w = w.replace(/ṟṟ/g, "#TR#").replace(/kk/g, "#KK#").replace(/cc/g, "#CC#").replace(/ṭṭ/g, "#TT#").replace(/tt/g, "#tt#").replace(/pp/g, "#PP#");
+    // 2. After a nasal, stops become voiced: ṅk→ng, ñc→nj, ṇṭ→nd, nt→nd, mp→mb, ṉṟ→ndr.
+    w = w.replace(/ṅk/g, "ng").replace(/ñc/g, "nj").replace(/ṇṭ/g, "nd").replace(/nt/g, "nd").replace(/mp/g, "mb").replace(/ṉṟ/g, "ndr");
+    // 3. A single stop between vowels softens: k→g, c→s, ṭ→d, t→d, p→b.
+    var soft = { "k": "g", "c": "s", "ṭ": "d", "t": "d", "p": "b" };
+    w = w.replace(new RegExp("([" + V + "])([kcṭtp])(?=[" + V + "])", "g"), function (m, v, s) { return v + soft[s]; });
+    // 4. Put the protected doubles back.
+    return w.replace(/#TR#/g, "ttr").replace(/#KK#/g, "kk").replace(/#CC#/g, "cch").replace(/#TT#/g, "tt").replace(/#tt#/g, "tt").replace(/#PP#/g, "pp");
+  },
+  // Whole words with a well-known spoken form.
+  SAY_AS: { "śrīperumbudūr": "Sriperumbudur", "śrīraṅgam": "Srirangam" },
   PLAIN_SANSKRIT: { caraka: "Charaka", candra: "Chandra", caitra: "Chaitra", cit: "chit", acit: "achit", caṇḍī: "Chandi", carita: "charita", cakra: "chakra" },
   respell: function (text) {
     var self = this;
     return String(text).replace(/[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+/g, function (word) {
       var lower = word.toLowerCase();
       if (self.PLAIN_SANSKRIT[lower]) return self.matchCase(word, self.PLAIN_SANSKRIT[lower]);
+      if (self.SAY_AS[lower]) return self.SAY_AS[lower];
+      lower = lower.replace(/^śrī/, "shri"); // Śrī is said "Shri", not "Shree"
       if (!/[āīūṛṝḷṅṭḍṇśṣḥṃṁēōḻṟṉ]|jñ/i.test(word)) return word; // ordinary word (incl. Spanish "señor")
-      var out = lower.replace(/c(?!h)/g, "ch"); // in Sanskrit, c is always "ch"
+      var out = self.isTamil(lower) ? self.tamilVoicing(lower) : lower.replace(/c(?!h)/g, "ch"); // in Sanskrit, c is always "ch"
       out = out.replace(/^ī/, "i").replace(/ī$/, "i"); // Īśvara → Ishvara, Purī → Puri (not "Puree")
       self.IAST_MAP.forEach(function (m) { out = out.split(m[0]).join(m[1]); });
       return self.matchCase(word, out);
