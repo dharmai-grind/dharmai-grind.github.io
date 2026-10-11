@@ -261,7 +261,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .fold summary::after { content: "›"; margin-left: auto; font-size: 1.4rem; line-height: 1; transition: transform 0.2s; color: var(--muted); }
 .fold[open] > summary::after { transform: rotate(90deg); }
 .fold > *:not(summary) { margin-left: 14px; margin-right: 14px; }
-.fold.inner { margin: 0 14px 12px; border-radius: 12px; background: var(--bg); }
+/* "Special settings" looks like a section heading (like "Preferences"), not a field */
+.fold.special { border: 0; border-top: 2px solid var(--line); border-radius: 0; background: none; margin: 26px 0 4px; }
+.fold.special > summary { padding: 16px 0 8px; flex-wrap: wrap; row-gap: 2px; }
+.fold.special > summary::after { order: 2; }
+.fold.special .sec-title { font-size: 1.1rem; font-weight: 800; order: 1; }
+.fold.special .sec-sub { order: 3; flex-basis: 100%; font-size: 0.85rem; font-weight: 600; color: var(--muted); }
+.fold.special > *:not(summary) { margin-left: 0; margin-right: 0; }
+.fold.inner { margin: 6px 0 12px; border-radius: 12px; background: var(--card); border: 2px solid var(--line); }
 .fold.inner summary { font-weight: 700; }
 .fold.inner > p, .fold.inner > .field { margin-left: 12px; margin-right: 12px; }
 .fold.inner > .field:last-child { padding-bottom: 12px; }

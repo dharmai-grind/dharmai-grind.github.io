@@ -844,7 +844,7 @@ DH.app = {
         if (!topics.length) return "";
         var lv = st.levels || {};
         var courses = topics.map(function (x) { return x.course; }).filter(function (c, i, a) { return a.indexOf(c) === i; });
-        return '<details class="fold special"><summary><i class="ti ti-adjustments"></i> ' + t("Special settings") + "</summary>" +
+        return '<details class="fold special"><summary><span class="sec-title">' + t("Special settings") + '</span><span class="sec-sub">' + t("Extra options for specific courses") + "</span></summary>" +
           courses.map(function (cid) {
             return '<details class="fold inner"><summary>' + t(DH.COURSES[cid].title) + "</summary>" +
               '<p class="small">' + t("Your level in each unit. It sets how technical that unit's lessons get.") + "</p>" +
