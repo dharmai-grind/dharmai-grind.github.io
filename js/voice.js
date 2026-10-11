@@ -413,11 +413,14 @@ DH.voice = {
       // A Sanskrit verse (Devanagari): Telugu/Kannada voice keeps final vowels.
       if (lang === "sa") {
         // Indian English can read the verse's romanized form (p.iast), if we have it.
-        var vp = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
-        if (vp === "one-main" && p.iast && /^en/i.test(mainVoice.lang)) { add(self.respellUS(p.iast, true), mainVoice); return; } // "one American voice" setting
-        if (vp === "one-enin" && p.iast && self.indianEnglish(mainVoice)) { add(self.respell(p.iast), self.indianEnglish(mainVoice)); return; }
-        var sv = self.nameVoice(mainVoice, !p.iast);
-        if (!sv) { missing = true; return; }
+        // Verses always get a real Indian voice: Telugu first (keeps final
+        // vowels), then Kannada, then Hindi; same gender as the main voice if
+        // possible. Only with none of these does the main voice read it.
+        var sv = self.nameVoice(mainVoice, true);
+        if (!sv) {
+          if (p.iast && mainVoice) add(self.respellUS(p.iast, true), mainVoice); else missing = true;
+          return;
+        }
         if (sv.mode === "enin") add(self.respell(p.iast), sv.voice);
         else add(sv.mode === "hi" ? text : self.fromDeva(text, sv.mode), sv.voice);
         return;
