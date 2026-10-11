@@ -6,9 +6,17 @@ DH.esc = function (s) {
   });
 };
 
-DH.today = function () {
+DH.today = function (offsetDays) {
   var d = new Date();
+  if (offsetDays) d.setDate(d.getDate() + offsetDays);
   return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+
+// The streak to show: if the last lesson was before yesterday, the streak is broken.
+DH.streakNow = function () {
+  var st = DH.store.state;
+  if (!st.lastDay || st.lastDay < DH.today(-1)) return 0;
+  return st.streak || 0;
 };
 
 // ---------- Saved state ----------

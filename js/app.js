@@ -285,7 +285,7 @@ DH.app = {
     var st = DH.store.state;
     var html = '<div class="shell"><header class="topbar">' +
       '<span class="brand small">dharm<span>AI</span></span>' +
-      '<span class="pill saffron"><i class="ti ti-flame"></i> ' + st.streak + "</span>" +
+      '<span class="pill saffron"><i class="ti ti-flame"></i> ' + DH.streakNow() + "</span>" +
       '<span class="pill purple"><i class="ti ti-bolt"></i> ' + st.xp + " " + DH.t("XP") + "</span></header>" +
       '<main class="screen">' + content + "</main>" +
       '<nav class="tabbar">' + nav.map(function (n) {
@@ -720,7 +720,7 @@ DH.app = {
         : "";
     return '<div class="me-head">' + DH.angada(90, "happy") + "<div><h1>" + (acc ? DH.esc(acc.username) : t("Your profile")) + "</h1></div></div>" +
       accountCard +
-      '<div class="stats"><div class="stat fire"><span>' + t("Day streak") + "</span><b>" + st.streak + '</b></div><div class="stat xp"><span>' + t("Total XP") + "</span><b>" + st.xp + '</b></div><div class="stat acc"><span>' + t("Lessons") + "</span><b>" + lessons + "</b></div></div>" +
+      '<div class="stats"><div class="stat fire"><span>' + t("Day streak") + "</span><b>" + DH.streakNow() + '</b></div><div class="stat xp"><span>' + t("Total XP") + "</span><b>" + st.xp + '</b></div><div class="stat acc"><span>' + t("Lessons") + "</span><b>" + lessons + "</b></div></div>" +
       "<h2>" + t("Preferences") + "</h2>" +
       '<label class="field"><span>' + t("Language") + '</span><select data-pref="lang">' + DH.LANGUAGES.map(function (l) {
         return '<option value="' + l.code + '"' + (p.lang === l.code ? " selected" : "") + ">" + DH.esc(l.native + " · " + l.name) + "</option>";
