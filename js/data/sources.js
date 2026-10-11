@@ -176,6 +176,13 @@ DH.SOURCES = {
     en: "The unreal has no being, and the real never ceases to be. Those who see the truth have seen the final word on both.",
     tags: "real unreal sat asat being reality truth"
   },
+  "cu-6.1.4": {
+    kind: "verse", work: "Chāndogya Upaniṣad", ref: "6.1.4",
+    sa: "यथा सोम्यैकेन मृत्पिण्डेन सर्वं मृन्मयं विज्ञातं स्याद्वाचारम्भणं विकारो नामधेयं मृत्तिकेत्येव सत्यम् ।",
+    iast: "yathā somyaikena mṛt-piṇḍena sarvaṃ mṛn-mayaṃ vijñātaṃ syād vācārambhaṇaṃ vikāro nāmadheyaṃ mṛttikety eva satyam",
+    en: "Just as, dear one, by knowing one lump of clay, everything made of clay is known: the changed form is just a matter of words, a name. The truth is: it is only clay.",
+    tags: "clay pot name form mithya world real brahman uddalaka advaita"
+  },
   "brahma-satyam": {
     kind: "tradition", work: "Famous summary of Advaita", ref: "traditionally attributed to Śaṅkara",
     sa: "ब्रह्म सत्यं जगन्मिथ्या जीवो ब्रह्मैव नापरः ।",
@@ -225,7 +232,7 @@ DH.SOURCES = {
   },
   "madhva-life": {
     kind: "tradition", work: "Traditional biographies of Madhva", ref: "e.g. Nārāyaṇa Paṇḍita's Sumadhvavijaya",
-    en: "Tradition says Madhva was born in 1238 at Pājaka near Udupi in Karnataka, named Vāsudeva. He studied under Acyutaprekṣa, an Advaita teacher, but came to disagree. As a monk he was named Pūrṇaprajña and later Ānandatīrtha. He installed the famous Kṛṣṇa image at Udupi and founded eight monasteries there. Followers revere him as an incarnation of Vāyu, the wind god, like Hanumān and Bhīma before him.",
+    en: "Tradition says Madhva was born at Pājaka near Udupi in Karnataka, named Vāsudeva (usually dated 1238–1317; some scholars prefer 1199–1278). He studied under Acyutaprekṣa, an Advaita teacher, but came to disagree. As a monk he was named Pūrṇaprajña and later Ānandatīrtha. He installed the famous Kṛṣṇa image at Udupi and founded eight monasteries there. Followers revere him as an incarnation of Vāyu, the wind god, like Hanumān and Bhīma before him.",
     tags: "madhva life udupi pajaka vasudeva achyutapreksha purnaprajna anandatirtha krishna matha ashta matha vayu hanuman bhima history"
   },
   "madhva-works": {

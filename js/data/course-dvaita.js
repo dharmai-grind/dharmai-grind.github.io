@@ -46,7 +46,7 @@ DH.COURSES.dvaita = {
         {
           id: "d2-1", title: "The boy from Udupi",
           cards: [
-            { t: "teach", title: "Born near Udupi", body: "Tradition says Madhva was born in 1238 at Pājaka, near Udupi in Karnataka. His childhood name was Vāsudeva.", src: "madhva-life" },
+            { t: "teach", title: "Born near Udupi", body: "Tradition says Madhva was born at Pājaka, near Udupi in Karnataka. His childhood name was Vāsudeva. The usual dates are 1238–1317, though some scholars prefer 1199–1278.", src: "madhva-life" },
             { t: "teach", title: "A student who disagreed", body: "He became a monk under Acyutaprekṣa, a teacher of Advaita. But Madhva came to disagree with Advaita. As a monk he was named Pūrṇaprajña ('full of wisdom') and later Ānandatīrtha." },
             { t: "teach", title: "Hanumān's line", body: "Madhva's followers revere him as the third incarnation of Vāyu, the wind god, after Hanumān in the Rāmāyaṇa and Bhīma in the Mahābhārata. (Angada knew Hanumān well!)", src: "madhva-life" },
             { t: "mcq", tag: "trivia", q: "Where was Madhva born, according to tradition?", opts: ["Pājaka, near Udupi", "Kāladi, Kerala", "Śrīperumbudūr", "Varanasi"], a: 0, why: "Kāladi is Śaṅkara's birthplace; Śrīperumbudūr is Rāmānuja's." },
@@ -59,7 +59,7 @@ DH.COURSES.dvaita = {
           id: "d2-2", title: "Kṛṣṇa of Udupi",
           cards: [
             { t: "teach", title: "A storm at sea", body: "A famous story: a ship was caught in a storm off the coast near Udupi. Madhva helped it to safety, and from the ship's cargo he was given a lump of clay (gopīcandana). Inside was an image of Kṛṣṇa, which he installed at Udupi.", src: "madhva-life" },
-            { t: "teach", title: "Eight monasteries", body: "Madhva founded eight monasteries (the aṣṭa maṭha) at Udupi. Their heads take turns caring for the Kṛṣṇa temple, each for two years. This rotation is called paryāya, and it continues today." },
+            { t: "teach", title: "Eight monasteries", body: "Madhva founded eight monasteries (the aṣṭa maṭha) at Udupi. Their heads take turns caring for the Kṛṣṇa temple. This rotation is called paryāya. Each turn was once two months; in the 1500s the saint Vādirāja changed it to two years, and that's how it still works today." },
             { t: "mcq", tag: "core", q: "What was found inside the lump of clay from the ship?", opts: ["An image of Kṛṣṇa", "A golden book", "A seashell", "A sword"], a: 0, why: "The Kṛṣṇa image still worshipped at Udupi." },
             { t: "mcq", tag: "trivia", q: "What is the 'paryāya' at Udupi?", opts: ["The two-year rotation of temple care among the eight monasteries", "A boat race", "A type of sweet", "A Sanskrit poem"], a: 0, why: "Each of the eight maṭha heads takes a two-year turn." },
             { t: "tf", tag: "trivia", q: "Madhva founded eight monasteries at Udupi.", a: true, why: "The aṣṭa maṭha, 'eight monasteries'." },
