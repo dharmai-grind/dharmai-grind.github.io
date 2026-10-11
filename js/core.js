@@ -300,12 +300,35 @@ DH.ai = {
       return ids.indexOf(id) >= 0 ? "[[" + id + "]]" : "";
     });
   },
+  // Which unit topic a question is about (for level-appropriate answers).
+  TOPIC_WORDS: {
+    linguistics: "panini grammar linguist sutra ashtadhyayi language backus chomsky",
+    numbers: "zero place value numeral digit brahmagupta negative decimal shunya algorithm",
+    geometry: "pythag sulba baudhayana diagonal square root geometry altar triangle",
+    trigonometry: "sine cosine trig jya chord aryabhata angle eclipse",
+    calculus: "calculus series infinite madhava kerala derivative integral limit newton leibniz pingala fibonacci",
+    physics: "physics atom paramanu kanada gravity attraction motion rotation spin bhaskara falling",
+    chemistry: "chemistry iron pillar steel wootz zinc metal alchemy rasashastra mercury rust",
+    medicine: "medicine surgery sushruta charaka ayurveda dosha doctor cure remedy cataract health"
+  },
+  levelHint: function (question) {
+    var levels = DH.store.state.levels || {}, q = DH.norm(question), self = this;
+    var topic = Object.keys(this.TOPIC_WORDS).find(function (t) {
+      return levels[t] && self.TOPIC_WORDS[t].split(" ").some(function (w) { return q.indexOf(w) >= 0; });
+    });
+    if (!topic) return "";
+    return "\n\n" + {
+      "new": "[Answer level for " + topic + ": NEW. Explain like to a curious 10-year-old: story, people and why it mattered. Absolutely no formulas, numbers-with-symbols (like π/4), or technical terms (like series, derivative, integral, function).]",
+      basics: "[Answer level for " + topic + ": BASICS. Name the key technical terms and explain each simply; at most one simple formula, explained in words.]",
+      well: "[Answer level for " + topic + ": WELL. Be technical: include the actual formulas or notation (in plain-text Unicode), correct terminology, and how the method works. Up to 180 words.]"
+    }[levels[topic]];
+  },
   // Tutor. opts: { question, history }
   ask: function (opts) {
     var self = this, r = this.retrieve(opts.question);
     if (!this.configured()) return Promise.resolve({ offline: true, ids: r.ids });
     return this.post("/ask", {
-      question: opts.question, history: (opts.history || []).slice(-10),
+      question: opts.question + this.levelHint(opts.question), history: (opts.history || []).slice(-10),
       passages: r.passages, profile: this.profile()
     }).then(function (j) { return { text: self.clean(j.answer, r.ids) }; });
   },
