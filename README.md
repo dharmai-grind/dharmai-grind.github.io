@@ -22,6 +22,10 @@ Live site (once published): https://dharmai-grind.github.io
 
 Progress, XP and streaks are saved only in each visitor's browser. There are no accounts and no personal data.
 
+## Every update
+
+Bump the `?v=` number on every file link in `index.html` (e.g. `?v=4` to `?v=5`), so visitors get all the new files together instead of a mix of old and new.
+
 ## Every year
 
 Add the new Navaratri dates to `js/config.js` so the "Happening now" badge shows at the right time.
