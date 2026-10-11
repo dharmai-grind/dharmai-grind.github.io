@@ -855,11 +855,15 @@ DH.app = {
             var nv = DH.voice.nameVoice(DH.voice.pick(DH.lang()), false);
             var cur2 = p.nameVoice || "auto";
             var opt = function (v, label) { return '<option value="' + v + '"' + (cur2 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
+            var one = cur2 === "auto" || cur2 === "one-main";
             return '<label class="field"><span>' + t("Voice for Sanskrit and Indian names") + '</span><select data-pref="nameVoice">' +
-              opt("auto", "Automatic (Telugu, then Kannada, then Indian English, then Hindi)") +
-              opt("te", "Telugu voice") + opt("kn", "Kannada voice") + opt("enin", "Indian English voice") + opt("hi", "Hindi voice (drops the final 'a')") +
+              opt("auto", "Same voice, pronounced as closely as possible (recommended)") +
+              opt("one-enin", "One Indian English voice for everything") +
+              opt("te", "Switch to a Telugu voice for names") + opt("kn", "Switch to a Kannada voice for names") +
+              opt("enin", "Switch to an Indian English voice for names") + opt("hi", "Switch to a Hindi voice for names (drops the final 'a')") +
               "</select></label>" +
-              '<p class="small">' + (nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("No Indian voice found on this device, so names are respelled for the English voice.")) + "</p>";
+              '<p class="small">' + (one ? t("Names are spelled out for your main voice, e.g. Navarātri is read as 'nuhvuhrahtree'.")
+                : nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("That voice isn't on this device, so names are respelled for your main voice.")) + "</p>";
           })() +
           '<div class="voice-row"><label class="field"><span>' + t("Reading speed") + "</span>" + sel("rate", [["0.85", "Slower"], ["1", "Normal"], ["1.15", "Faster"]]) + "</label>" +
           '<button class="btn small" id="testVoice"><i class="ti ti-volume"></i> ' + t("Test") + "</button></div>";
