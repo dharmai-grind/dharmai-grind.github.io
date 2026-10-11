@@ -265,6 +265,115 @@ DH.SOURCES = {
     en: "The Haridāsas ('servants of Hari') spread Dvaita devotion through songs in Kannada, not just Sanskrit. Purandaradāsa, a student of Vyāsatīrtha, is called the grandfather of Carnatic music. A famous story says that when Kanakadāsa was kept out of the Udupi temple, Kṛṣṇa turned to face him through a small window, still called 'Kanakana Kiṇḍi' (Kanaka's window).",
     tags: "haridasa purandaradasa kanakadasa kanakana kindi udupi kannada songs carnatic music dvaita bhakti"
   },
+  // ---- Bhagavad Gītā ----
+  "bg-1.1": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "1.1",
+    sa: "धर्मक्षेत्रे कुरुक्षेत्रे समवेता युयुत्सवः । मामकाः पाण्डवाश्चैव किमकुर्वत सञ्जय ॥",
+    iast: "dharma-kṣetre kuru-kṣetre samavetā yuyutsavaḥ, māmakāḥ pāṇḍavāś caiva kim akurvata sañjaya",
+    en: "On the field of dharma, on the field of Kuru, gathered and eager to fight: what did my sons and the sons of Pāṇḍu do, Sañjaya?",
+    tags: "gita first verse dhritarashtra sanjaya kurukshetra battlefield dharma setting"
+  },
+  "bg-2.7": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "2.7",
+    sa: "कार्पण्यदोषोपहतस्वभावः पृच्छामि त्वां धर्मसम्मूढचेताः । यच्छ्रेयः स्यान्निश्चितं ब्रूहि तन्मे शिष्यस्तेऽहं शाधि मां त्वां प्रपन्नम् ॥",
+    iast: "kārpaṇya-doṣopahata-svabhāvaḥ pṛcchāmi tvāṃ dharma-sammūḍha-cetāḥ, yac chreyaḥ syān niścitaṃ brūhi tan me śiṣyas te 'haṃ śādhi māṃ tvāṃ prapannam",
+    en: "My nature is overcome by weakness; my mind is confused about dharma. I ask you: tell me clearly what is best for me. I am your student. Teach me; I take refuge in you.",
+    tags: "arjuna crisis confused student disciple asks krishna teach me refuge"
+  },
+  "bg-2.22": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "2.22",
+    sa: "वासांसि जीर्णानि यथा विहाय नवानि गृह्णाति नरोऽपराणि । तथा शरीराणि विहाय जीर्णान्यन्यानि संयाति नवानि देही ॥",
+    iast: "vāsāṃsi jīrṇāni yathā vihāya navāni gṛhṇāti naro 'parāṇi, tathā śarīrāṇi vihāya jīrṇāny anyāni saṃyāti navāni dehī",
+    en: "Just as a person throws off worn-out clothes and puts on new ones, so the embodied self throws off worn-out bodies and enters new ones.",
+    tags: "clothes rebirth body self death reincarnation"
+  },
+  "bg-2.47": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "2.47",
+    sa: "कर्मण्येवाधिकारस्ते मा फलेषु कदाचन । मा कर्मफलहेतुर्भूर्मा ते सङ्गोऽस्त्वकर्मणि ॥",
+    iast: "karmaṇy evādhikāras te mā phaleṣu kadācana, mā karma-phala-hetur bhūr mā te saṅgo 'stv akarmaṇi",
+    en: "Your right is to the action alone, never to its fruits. Don't let the fruits of action be your motive, and don't be attached to not acting either.",
+    tags: "karma yoga action results fruits detachment nishkama work duty"
+  },
+  "bg-3.35": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "3.35",
+    sa: "श्रेयान्स्वधर्मो विगुणः परधर्मात्स्वनुष्ठितात् । स्वधर्मे निधनं श्रेयः परधर्मो भयावहः ॥",
+    iast: "śreyān sva-dharmo viguṇaḥ para-dharmāt sv-anuṣṭhitāt, sva-dharme nidhanaṃ śreyaḥ para-dharmo bhayāvahaḥ",
+    en: "Better your own dharma done imperfectly than another's dharma done well. Better to die in your own dharma; another's dharma is full of danger.",
+    tags: "svadharma own duty other's duty calling nature varna"
+  },
+  "bg-4.7-8": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "4.7–8",
+    sa: "यदा यदा हि धर्मस्य ग्लानिर्भवति भारत । अभ्युत्थानमधर्मस्य तदात्मानं सृजाम्यहम् ॥ परित्राणाय साधूनां विनाशाय च दुष्कृताम् । धर्मसंस्थापनार्थाय सम्भवामि युगे युगे ॥",
+    iast: "yadā yadā hi dharmasya glānir bhavati bhārata, abhyutthānam adharmasya tadātmānaṃ sṛjāmy aham; paritrāṇāya sādhūnāṃ vināśāya ca duṣkṛtām, dharma-saṃsthāpanārthāya sambhavāmi yuge yuge",
+    en: "Whenever dharma declines and adharma rises, I bring myself forth. To protect the good, to destroy wrongdoing, and to firmly establish dharma, I come into being age after age.",
+    tags: "avatar avatara incarnation dharma declines protect good yuge yuge"
+  },
+  "bg-6.5": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "6.5",
+    sa: "उद्धरेदात्मनात्मानं नात्मानमवसादयेत् । आत्मैव ह्यात्मनो बन्धुरात्मैव रिपुरात्मनः ॥",
+    iast: "uddhared ātmanātmānaṃ nātmānam avasādayet, ātmaiva hy ātmano bandhur ātmaiva ripur ātmanaḥ",
+    en: "Lift yourself up by your own self; don't let yourself sink. For you alone are your own friend, and you alone are your own enemy.",
+    tags: "mind self friend enemy lift yourself discipline"
+  },
+  "bg-6.35": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "6.35",
+    sa: "असंशयं महाबाहो मनो दुर्निग्रहं चलम् । अभ्यासेन तु कौन्तेय वैराग्येण च गृह्यते ॥",
+    iast: "asaṃśayaṃ mahā-bāho mano durnigrahaṃ calam, abhyāsena tu kaunteya vairāgyeṇa ca gṛhyate",
+    en: "No doubt, mighty-armed one, the mind is restless and hard to control. But it can be held by practice and by detachment.",
+    tags: "mind restless control practice abhyasa detachment vairagya meditation"
+  },
+  "bg-9.26": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "9.26",
+    sa: "पत्रं पुष्पं फलं तोयं यो मे भक्त्या प्रयच्छति । तदहं भक्त्युपहृतमश्नामि प्रयतात्मनः ॥",
+    iast: "patraṃ puṣpaṃ phalaṃ toyaṃ yo me bhaktyā prayacchati, tad ahaṃ bhakty-upahṛtam aśnāmi prayatātmanaḥ",
+    en: "Whoever offers me with devotion a leaf, a flower, a fruit or some water: that offering of love from a pure heart, I accept.",
+    tags: "leaf flower fruit water offering devotion bhakti simple love"
+  },
+  "bg-11.32": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "11.32 (first half)",
+    sa: "कालोऽस्मि लोकक्षयकृत्प्रवृद्धो लोकान्समाहर्तुमिह प्रवृत्तः ।",
+    iast: "kālo 'smi loka-kṣaya-kṛt pravṛddho lokān samāhartum iha pravṛttaḥ",
+    en: "I am Time, grown mighty, the destroyer of worlds, come forth here to sweep the worlds away.",
+    tags: "kala time death destroyer of worlds cosmic form vishvarupa oppenheimer chapter 11"
+  },
+  "bg-12.13": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "12.13",
+    sa: "अद्वेष्टा सर्वभूतानां मैत्रः करुण एव च । निर्ममो निरहङ्कारः समदुःखसुखः क्षमी ॥",
+    iast: "adveṣṭā sarva-bhūtānāṃ maitraḥ karuṇa eva ca, nirmamo nirahaṅkāraḥ sama-duḥkha-sukhaḥ kṣamī",
+    en: "One who hates no being, who is friendly and compassionate, free of 'mine' and of ego, steady in sorrow and joy, and forgiving.",
+    tags: "devotee qualities friendly compassion no hatred ego forgiving bhakti chapter 12"
+  },
+  "bg-14.5": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "14.5",
+    sa: "सत्त्वं रजस्तम इति गुणाः प्रकृतिसम्भवाः । निबध्नन्ति महाबाहो देहे देहिनमव्ययम् ॥",
+    iast: "sattvaṃ rajas tama iti guṇāḥ prakṛti-sambhavāḥ, nibadhnanti mahā-bāho dehe dehinam avyayam",
+    en: "Sattva, rajas and tamas: these qualities born of nature bind the imperishable self to the body, mighty-armed one.",
+    tags: "three gunas sattva rajas tamas qualities nature prakriti chapter 14"
+  },
+  "bg-18.63": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "18.63",
+    sa: "इति ते ज्ञानमाख्यातं गुह्याद्गुह्यतरं मया । विमृश्यैतदशेषेण यथेच्छसि तथा कुरु ॥",
+    iast: "iti te jñānam ākhyātaṃ guhyād guhyataraṃ mayā, vimṛśyaitad aśeṣeṇa yathecchasi tathā kuru",
+    en: "Thus I have told you this knowledge, more secret than all secrets. Reflect on it fully, and then do as you wish.",
+    tags: "reflect think choose free will do as you wish decide critical thinking chapter 18"
+  },
+  "bg-18.73": {
+    kind: "verse", work: "Bhagavad Gītā", ref: "18.73",
+    sa: "नष्टो मोहः स्मृतिर्लब्धा त्वत्प्रसादान्मयाच्युत । स्थितोऽस्मि गतसन्देहः करिष्ये वचनं तव ॥",
+    iast: "naṣṭo mohaḥ smṛtir labdhā tvat-prasādān mayācyuta, sthito 'smi gata-sandehaḥ kariṣye vacanaṃ tava",
+    en: "My confusion is gone; by your grace I have regained my memory, Acyuta. I stand firm, my doubts are gone. I will do as you say.",
+    tags: "arjuna resolved confusion gone doubt end of gita decision"
+  },
+  "gita-setting": {
+    kind: "summary", work: "The Bhagavad Gītā in the Mahābhārata", ref: "Bhīṣma Parva (book 6)",
+    en: "The Bhagavad Gītā ('Song of the Lord') is a dialogue of 700 verses in 18 chapters, found in the sixth book of the Mahābhārata, the Bhīṣma Parva. Before the great war at Kurukṣetra, the warrior Arjuna loses heart at the thought of fighting his relatives and teachers, and Kṛṣṇa, serving as his charioteer, teaches him. The whole conversation is narrated by Sañjaya, who was given divine sight by the sage Vyāsa, to the blind king Dhṛtarāṣṭra.",
+    tags: "gita setting mahabharata bhishma parva 700 verses 18 chapters arjuna krishna charioteer sanjaya dhritarashtra vyasa kurukshetra"
+  },
+  "gita-readers": {
+    kind: "summary", work: "How the Gītā has been read", ref: "commentators and modern readers",
+    en: "Every Vedānta founder wrote a Gītā commentary: Śaṅkara stressed knowledge, Rāmānuja loving devotion, and Madhva devotion to Viṣṇu as supreme. Jñāneśvar retold it in Marathi in the Jñāneśvarī (1290). Charles Wilkins published the first English translation in 1785. In America, Henry David Thoreau wrote of reading it in Walden (1854), and Ralph Waldo Emerson's poem 'Brahma' (1857) echoes Gītā 2.19. Bal Gangadhar Tilak wrote the Gītā Rahasya in prison in Mandalay (1910–11), stressing action; Mahatma Gandhi called the Gītā his 'mother' and read its battle as the struggle inside each person. Critics like B. R. Ambedkar argued it was used to defend the caste system. The physicist J. Robert Oppenheimer recalled verse 11.32 after the first atomic bomb test in 1945.",
+    tags: "gita commentaries shankara ramanuja madhva jnaneshwar jnaneshwari wilkins 1785 thoreau walden emerson brahma poem tilak gita rahasya gandhi mother ambedkar caste oppenheimer readers interpretation"
+  },
   // ---- Science ----
   "panini-1.1.1": {
     kind: "verse", work: "Pāṇini, Aṣṭādhyāyī", ref: "1.1.1–2",

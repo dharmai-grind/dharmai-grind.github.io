@@ -135,7 +135,7 @@ DH.account = {
 
 // Philosophy school courses (not festivals or topics like science).
 DH.isSchool = function (course) {
-  return !!course && !course.festival && course.kind !== "topic";
+  return !!course && !course.festival && course.kind !== "topic" && course.kind !== "literature";
 };
 
 DH.lang = function () {

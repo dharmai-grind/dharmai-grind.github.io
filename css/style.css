@@ -10,6 +10,7 @@
   --purple: #7f77dd; --purple-d: #534ab7; --purple-l: #eeedfe; --purple-ink: #3c3489;
   --blue: #378add; --blue-d: #185fa5; --blue-l: #e6f1fb; --blue-ink: #0c447c;
   --gray: #888780; --gray-d: #5f5e5a; --gray-l: #f1efe8; --gray-ink: #444441;
+  --coral: #d85a30; --coral-l: #faece7; --coral-ink: #712b13;
   --good: #58a700; --good-l: #d7ffb8; --bad: #e24b4a; --bad-l: #ffdfe0;
   --font: "Nunito", "Noto Sans", "Noto Sans Devanagari", "Noto Sans Tamil", system-ui, sans-serif;
 }
@@ -19,6 +20,7 @@
     --teal-l: #0f3a30; --teal-ink: #9fe1cb; --saffron-l: #3d2a0d; --saffron-ink: #fac775;
     --pink-l: #3e1a28; --pink-ink: #f4c0d1; --purple-l: #26215c; --purple-ink: #cecbf6;
     --blue-l: #0c2c4a; --blue-ink: #b5d4f4; --gray-l: #24343b; --gray-ink: #d3d1c7;
+    --coral-l: #4a1b0c; --coral-ink: #f5c4b3;
     --good-l: #1f3a12; --bad-l: #3e1717;
   }
 }
@@ -164,6 +166,10 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .unit-head.teal { background: var(--teal); } .unit-head.pink { background: var(--pink); }
 .unit-head.purple { background: var(--purple); } .unit-head.blue { background: var(--blue); }
 .unit-head.saffron { background: var(--saffron-d); }
+.unit-head.coral { background: var(--coral); }
+.node.done.coral, .node.current.coral { background: var(--coral); }
+.chip.on.coral { background: var(--coral-l); border-color: var(--coral); color: var(--coral-ink); }
+.cc-icon.coral { background: var(--coral-l); color: var(--coral-ink); }
 .node.done.saffron, .node.current.saffron { background: var(--saffron-d); }
 .chip.on.saffron { background: var(--saffron-l); border-color: var(--saffron); color: var(--saffron-ink); }
 .cc-icon.saffron { background: var(--saffron-l); color: var(--saffron-ink); }

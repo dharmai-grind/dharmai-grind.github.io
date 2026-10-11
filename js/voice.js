@@ -135,6 +135,7 @@ DH.voice = {
     golu: "golu", kolu: "kolu", sundal: "suṇḍal", madhva: "madhva", ramanuja: "rāmānuja", shankara: "śaṅkara",
     caraka: "caraka", candra: "candra", caitra: "caitra", cit: "cit", acit: "acit",
     prapatti: "prapatti", brahmagupta: "brahmagupta", tat: "tat", tvam: "tvam", asi: "asi",
+    arjuna: "arjuna", kurukshetra: "kurukṣetra", gita: "gītā", jnaneshwari: "jñāneśvarī", tilak: "tilak",
     sita: "sītā", rama: "rāma", ravana: "rāvaṇa", ganesha: "gaṇeśa", diwali: "dīvālī", mantra: "mantra", guru: "guru"
   },
   DEVA_CONS: {

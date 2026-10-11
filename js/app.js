@@ -89,6 +89,9 @@ DH.app = {
         "<h2>" + t("A festival") + "</h2>" +
         '<div class="opts">' + group("festival") + "</div>" +
         '<div class="or"><span>' + t("or") + "</span></div>" +
+        "<h2>" + t("A work of literature") + "</h2>" +
+        '<div class="opts">' + group("literature") + "</div>" +
+        '<div class="or"><span>' + t("or") + "</span></div>" +
         "<h2>" + t("A miscellaneous topic") + "</h2>" +
         '<div class="opts">' + group("topic") + "</div>";
     }
@@ -166,7 +169,7 @@ DH.app = {
       });
     }
     document.getElementById("next").onclick = function () {
-      if (name === "school" && !draft.start) return err("Pick a school, festival or topic to continue");
+      if (name === "school" && !draft.start) return err("Pick something to start with");
       if (name === "tradition") draft.tradition = document.getElementById("trad").value.trim();
       if (name === "language") draft.lang = draft.lang || "en";
       if (name === "length" && !draft.length) return err("Pick a lesson length");
@@ -475,6 +478,7 @@ DH.app = {
     return "<h1>" + DH.t("Courses") + "</h1><p>" + DH.t("Take as many as you like at the same time.") + "</p>" +
       "<h2>" + DH.t("Philosophical schools") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "school"; }).map(card).join("") +
       "<h2>" + DH.t("Festivals") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "festival"; }).map(card).join("") +
+      "<h2>" + DH.t("Literature") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "literature"; }).map(card).join("") +
       "<h2>" + DH.t("Miscellaneous topics") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "topic"; }).map(card).join("");
   },
 
