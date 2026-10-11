@@ -521,8 +521,30 @@ DH.app = {
     return DH.tr("dharmAI couldn't answer right now (the free AI may be busy). Try again in a minute.");
   },
 
+  // The AI sometimes writes math in LaTeX ($\pi/4$). Turn it into plain symbols.
+  delatex: function (text) {
+    var sym = { pi: "π", theta: "θ", alpha: "α", beta: "β", infty: "∞", times: "×", cdot: "·", dots: "…", ldots: "…", cdots: "…",
+      pm: "±", leq: "≤", geq: "≥", neq: "≠", approx: "≈", sqrt: "√", sum: "Σ", int: "∫", to: "→", rightarrow: "→", degree: "°" };
+    var sup = { "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹", "n": "ⁿ", "-": "⁻", "+": "⁺" };
+    var sub = { "0": "₀", "1": "₁", "2": "₂", "3": "₃", "4": "₄", "5": "₅", "6": "₆", "7": "₇", "8": "₈", "9": "₉" };
+    return String(text).replace(/\$\$?([^$]+?)\$\$?/g, function (m, math) {
+      if (!/[\\^_=\/]/.test(math)) return m; // "$5 and $10" is money, not math
+      return math
+        .replace(/_\{?(\d)\}?/g, function (m4, d) { return sub[d]; })
+        .replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, "($1)/($2)")
+        .replace(/\\sqrt\{([^}]*)\}/g, "√($1)")
+        .replace(/\\([a-zA-Z]+)/g, function (m2, name) { return sym[name] !== undefined ? sym[name] : name; })
+        .replace(/\^\{([^}]*)\}|\^(\S)/g, function (m3, a, b) {
+          var s = a || b;
+          return s.split("").every(function (ch) { return sup[ch]; }) ? s.split("").map(function (ch) { return sup[ch]; }).join("") : "^" + s;
+        })
+        .replace(/[{}]/g, "")
+        .replace(/\(([a-zA-Z0-9.]+)\)\/\(([a-zA-Z0-9.]+)\)/g, "$1/$2");
+    });
+  },
+
   renderAnswer: function (text) {
-    var html = DH.esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+?)\*/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
+    var html = DH.esc(this.delatex(text)).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+?)\*/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
     // Citations become tiny numbers in the text, listed as small links at the end.
     var order = [];
     html = html.replace(/\s*\[\[([\w.\-]+)\]\]/g, function (m, id) {

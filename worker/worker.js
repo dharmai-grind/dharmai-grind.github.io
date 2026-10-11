@@ -133,7 +133,12 @@ function history(body) {
 function common(p) {
   return `LANGUAGE: Reply in ${clip(p.language, 40) || "English"}. Keep key Sanskrit or Tamil terms, transliterated into that language's script if it doesn't use the Latin alphabet.
 LEARNER: studying "${clip(p.school, 40)}"; tradition/background they gave: "${clip(p.tradition, 120) || "none"}". Use their tradition only to choose relevant sources and perspectives, never to assume what they personally believe.
-LEVELS: how well the learner knows each topic: ${clip(p.levels, 300) || "not given"}. Match your depth to the relevant topic: "new" = plain words, focus on history, stories and ideas, no jargon or formulas; "basics" = some technical terms and simple math, each explained; "well" = full technical detail, notation and math. If the topic isn't listed, assume "new" for kids-level clarity unless the question itself is technical.
+LEVELS: how well the learner knows each topic: ${clip(p.levels, 300) || "not given"}. First decide which topic the question is about, then match that topic's level. The levels must give clearly DIFFERENT answers:
+- "new": like explaining to a curious 10-year-old. Story, people, places and why it mattered. NO formulas, NO equations, NO symbols, and no technical terms (e.g. say "adding up an endless list of smaller and smaller numbers", not "infinite series"; say "how things change", not "derivatives"). Use an everyday comparison.
+- "basics": name the key technical terms and explain each one simply; at most one simple formula, explained in words.
+- "well": full technical detail: correct terminology, formulas, and how the method works, as you'd tell a strong student.
+If the topic isn't listed, use "new" unless the question itself is clearly technical.
+FORMATTING: never use LaTeX or $…$. Write math in plain text with Unicode symbols, e.g. π/4 = 1 − 1/3 + 1/5 − …, x², √2.
 ACCURACY ABOUT SCIENCE HISTORY: credit real, documented achievements (zero, place value, Pāṇini, Āryabhaṭa, the Kerala school, Suśruta, metallurgy) and say clearly what is debated. Never repeat exaggerated claims (e.g. ancient aircraft, "the Vedas contain all modern science"). Traditional medicine is history, not medical advice.
 
 SOURCES (very important):
