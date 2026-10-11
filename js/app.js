@@ -326,7 +326,7 @@ DH.app = {
   },
 
   renderAnswer: function (text) {
-    var html = DH.esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+    var html = DH.esc(text).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/(^|[^*])\*([^*\n]+?)\*/g, "$1<i>$2</i>").replace(/\n/g, "<br>");
     return html.replace(/\[\[([\w.\-]+)\]\]/g, function (m, id) {
       return DH.SOURCES[id] ? '<button class="chip cite" data-src="' + id + '"><i class="ti ti-book"></i> ' + DH.esc(DH.cite(id)) + "</button>" : "";
     });
