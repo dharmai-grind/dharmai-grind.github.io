@@ -49,7 +49,17 @@ Passwords and recovery codes are stored as salted hashes; nobody can read them.
 2. Open the Worker, then **Settings → Bindings → Add binding → D1 database**. Name it `DB`, pick `dharmai-db`, and deploy.
 3. That's it. The Worker creates its tables automatically on first use.
 
-Whenever `worker/worker.js` changes, paste the new version into the Worker's code editor and click **Deploy**.
+## Deploying the Worker automatically
+
+`tools/deploy-worker.ps1` uploads `worker/worker.js` to the `dharmai` Worker, keeping its AI and DB bindings:
+
+```
+powershell -ExecutionPolicy Bypass -File tools\deploy-worker.ps1
+```
+
+It reads a Cloudflare API token (template "Edit Cloudflare Workers") from `%USERPROFILE%\.dharmai\cloudflare-token.txt`, a private file outside this folder that is never committed. If the token is ever lost or leaked, delete it at dash.cloudflare.com/profile/api-tokens and make a new one.
+
+Manual fallback: paste `worker/worker.js` into the Worker's code editor and click **Deploy**.
 
 Free-tier limits apply. If lots of people use it in one day, the tutor may say "try again later."
 If Cloudflare retires the default model, set an `AI_MODEL` variable on the Worker to another model from developers.cloudflare.com/workers-ai/models.
