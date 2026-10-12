@@ -82,12 +82,12 @@ DH.app = {
       };
       body = "<h1>" + t("What would you like to learn first?") + "</h1>" +
         '<div class="note"><i class="ti ti-info-circle"></i> ' + t("You can take several courses at the same time. Choose one to start; you can add more anytime from Courses.") + "</div>" +
+        "<h2>" + t("A festival") + "</h2>" +
+        '<div class="opts">' + group("festival") + "</div>" +
+        '<div class="or"><span>' + t("or") + "</span></div>" +
         "<h2>" + t("A philosophical school") + "</h2>" +
         '<p class="small">' + t("Not sure? Each school's first unit compares all three, so any is a good start.") + "</p>" +
         '<div class="opts">' + group("school") + "</div>" +
-        '<div class="or"><span>' + t("or") + "</span></div>" +
-        "<h2>" + t("A festival") + "</h2>" +
-        '<div class="opts">' + group("festival") + "</div>" +
         '<div class="or"><span>' + t("or") + "</span></div>" +
         "<h2>" + t("A work of literature") + "</h2>" +
         '<div class="opts">' + group("literature") + "</div>" +
@@ -476,8 +476,8 @@ DH.app = {
         '<div class="cc-main"><b>' + DH.t(c.title) + " " + badge + "</b><span>" + DH.t(c.blurb) + "</span>" + action + "</div></div>";
     };
     return "<h1>" + DH.t("Courses") + "</h1><p>" + DH.t("Take as many as you like at the same time.") + "</p>" +
-      "<h2>" + DH.t("Philosophical schools") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "school"; }).map(card).join("") +
       "<h2>" + DH.t("Festivals") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "festival"; }).map(card).join("") +
+      "<h2>" + DH.t("Philosophical schools") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "school"; }).map(card).join("") +
       "<h2>" + DH.t("Literature") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "literature"; }).map(card).join("") +
       "<h2>" + DH.t("Miscellaneous topics") + "</h2>" + DH.CATALOG.filter(function (c) { return c.kind === "topic"; }).map(card).join("");
   },
