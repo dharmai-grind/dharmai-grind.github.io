@@ -23,7 +23,7 @@ export default {
     const cors = {
       "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0],
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Code",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -55,11 +55,6 @@ export default {
       await ensureTables(env);
       if (path === "/track") return reply(await track(body, env));
       if (path === "/stats/public") return reply(await publicStats(env));
-      if (path === "/stats/admin") {
-        const code = request.headers.get("X-Admin-Code") || "";
-        if (!env.ADMIN_CODE || !sameHex(await sha256(code), await sha256(env.ADMIN_CODE))) return reply({ error: "Wrong admin code." }, 401);
-        return reply(await adminStats(env));
-      }
       const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
       const r = await accounts(path, body, token, env);
       return reply(r.body, r.status || 200);
@@ -289,28 +284,6 @@ async function publicStats(env) {
   };
 }
 
-async function adminStats(env) {
-  const one = async (sql, ...args) => { const r = await env.DB.prepare(sql).bind(...args).first(); return r ? r.n : 0; };
-  const all = async (sql, ...args) => (await env.DB.prepare(sql).bind(...args).all()).results || [];
-  return {
-    totals: {
-      learners: await one("SELECT COUNT(*) AS n FROM stats_devices"),
-      accounts: await one("SELECT COUNT(*) AS n FROM users"),
-      lessons: await sumKind(env, "lesson_complete"),
-      coursesStarted: await sumKind(env, "course_start"),
-      questions: await sumKind(env, "ask"),
-      debates: await sumKind(env, "debate"),
-    },
-    active: {
-      today: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", today()),
-      week: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", daysAgo(6)),
-      month: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", daysAgo(29)),
-    },
-    courses: await all("SELECT course, kind, SUM(n) AS n FROM stats_daily WHERE kind IN ('lesson_complete', 'course_start') GROUP BY course, kind"),
-    daily: await all("SELECT day, kind, SUM(n) AS n FROM stats_daily WHERE day >= ? GROUP BY day, kind ORDER BY day", daysAgo(29)),
-    newLearners: await all("SELECT first_day AS day, COUNT(*) AS n FROM stats_devices WHERE first_day >= ? GROUP BY first_day ORDER BY first_day", daysAgo(29)),
-  };
-}
 
 const enc = new TextEncoder();
 const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");

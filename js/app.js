@@ -906,67 +906,7 @@ DH.app = {
       "<h2>" + t("About DHARMAi") + "</h2><p>" + t("DHARMAi teaches from primary texts, quoted in Sanskrit with our own translations, and marks summaries and regional traditions separately. It is a learning tool, not a religious authority. For questions about your own practice, ask your family, teacher or ācārya.") + "</p>" +
       "<h2>" + t("Privacy") + "</h2><p class=\"small\">" + t("Accounts need only a username and password. Passwords are stored scrambled, so nobody can read them. Your progress and chats are stored to sync your account; don't put personal information in them. To count learners, each browser gets a random anonymous ID; we count lessons and questions, never who you are.") + "</p>" +
       '<div class="danger-zone"><button class="btn danger small" id="reset"><i class="ti ti-refresh"></i> ' + t("Reset all progress") + "</button>" +
-      (acc ? '<button class="btn danger small" id="delAcc"><i class="ti ti-trash"></i> ' + t("Delete my account") + "</button>" : "") + "</div>" +
-      (DH.ai.configured() ? '<p class="admin-link"><button class="link" id="openAdmin">' + t("Admin dashboard") + "</button></p>" : "");
-  },
-
-  // ---------- Private analytics dashboard (admin code required) ----------
-  admin: function (err) {
-    var self = this, t = DH.t, code = null;
-    try { code = localStorage.getItem("dharmai-admin"); } catch (e) { }
-    var top = '<div class="lesson-top"><button class="icon-btn" id="back" aria-label="Back"><i class="ti ti-arrow-left"></i></button></div>';
-    if (!code) {
-      self.paint('<div class="onboard">' + top + '<div class="ob-body"><div class="auth-head">' + DH.angada(80, "think") + "<h1>" + t("Admin dashboard") + "</h1></div>" +
-        "<p>" + t("Enter your admin code. It's saved only on this device.") + "</p>" +
-        '<form id="adminForm"><label class="field"><span>' + t("Admin code") + '</span><input id="aCode" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>' +
-        '<div class="err" id="err">' + DH.esc(err || "") + '</div><button class="btn primary wide" id="aGo">' + t("Open dashboard") + "</button></form></div></div>", function () { self.admin(err); });
-      document.getElementById("back").onclick = function () { self.go("me"); };
-      document.getElementById("adminForm").onsubmit = function (e) {
-        e.preventDefault();
-        var c = document.getElementById("aCode").value.trim();
-        if (!c) { document.getElementById("err").textContent = DH.tr("Enter the code first"); return; }
-        try { localStorage.setItem("dharmai-admin", c); } catch (x) { }
-        self.admin();
-      };
-      return;
-    }
-    self.paint('<div class="center-screen">' + DH.angada(100, "think") + "<p>" + t("Loading stats...") + "</p></div>", function () { });
-    DH.stats.get("/stats/admin", code).then(function (s) { self.adminView(s); }).catch(function (e) {
-      try { localStorage.removeItem("dharmai-admin"); } catch (x) { }
-      self.admin(e.message === "Wrong admin code." ? DH.tr("That code didn't work.") : DH.tr("Couldn't load stats. Try again."));
-    });
-  },
-
-  adminView: function (s) {
-    var self = this, t = DH.t, n = function (x) { return Number(x || 0).toLocaleString(); };
-    var tile = function (label, val, cls) { return '<div class="stat ' + cls + '"><span>' + t(label) + "</span><b>" + n(val) + "</b></div>"; };
-    // Per-course table.
-    var by = {};
-    (s.courses || []).forEach(function (r) { var c = by[r.course] = by[r.course] || { start: 0, done: 0 }; if (r.kind === "course_start") c.start = r.n; else c.done = r.n; });
-    var rows = Object.keys(by).sort(function (a, b) { return by[b].done - by[a].done; }).map(function (id) {
-      var name = DH.COURSES[id] ? DH.COURSES[id].title : id;
-      return "<tr><td>" + DH.esc(name) + "</td><td>" + n(by[id].start) + "</td><td>" + n(by[id].done) + "</td></tr>";
-    }).join("");
-    // Last 30 days: learners active (opens) and lessons completed, as bars.
-    var days = [], map = {};
-    for (var i = 29; i >= 0; i--) { var d = new Date(Date.now() - i * 86400000).toISOString().slice(0, 10); days.push(d); map[d] = { open: 0, lesson: 0 }; }
-    (s.daily || []).forEach(function (r) { if (!map[r.day]) return; if (r.kind === "open") map[r.day].open += r.n; if (r.kind === "lesson_complete") map[r.day].lesson += r.n; });
-    var max = Math.max(1, Math.max.apply(null, days.map(function (d) { return Math.max(map[d].open, map[d].lesson); })));
-    var bars = days.map(function (d) {
-      return '<div class="day" title="' + d + ": " + map[d].open + " active, " + map[d].lesson + ' lessons"><i class="b-open" style="height:' + Math.round(map[d].open / max * 100) + '%"></i><i class="b-lesson" style="height:' + Math.round(map[d].lesson / max * 100) + '%"></i></div>';
-    }).join("");
-    var T = s.totals || {}, A = s.active || {};
-    self.paint('<div class="shell"><div class="screen admin">' +
-      '<div class="lesson-top"><button class="icon-btn" id="back" aria-label="Back"><i class="ti ti-arrow-left"></i></button><b>' + t("Admin dashboard") + '</b><button class="link" id="lock">' + t("Lock") + "</button></div>" +
-      "<h2>" + t("Totals") + '</h2><div class="stats grid3">' + tile("Learners", T.learners, "fire") + tile("Accounts", T.accounts, "acc") + tile("Lessons done", T.lessons, "xp") +
-      tile("Courses started", T.coursesStarted, "acc") + tile("AI questions", T.questions, "xp") + tile("Debates", T.debates, "fire") + "</div>" +
-      "<h2>" + t("Active learners") + '</h2><div class="stats">' + tile("Today", A.today, "fire") + tile("Last 7 days", A.week, "xp") + tile("Last 30 days", A.month, "acc") + "</div>" +
-      "<h2>" + t("Last 30 days") + '</h2><div class="chart">' + bars + '</div><p class="small legend"><span class="k-open"></span> ' + t("Active learners") + ' &nbsp; <span class="k-lesson"></span> ' + t("Lessons done") + "</p>" +
-      "<h2>" + t("By course") + '</h2><table class="ctable"><tr><th>' + t("Course") + "</th><th>" + t("Started") + "</th><th>" + t("Lessons done") + "</th></tr>" +
-      (rows || '<tr><td colspan="3">' + t("No data yet") + "</td></tr>") + "</table>" +
-      '<p class="small">' + t("All counts are anonymous. Learners = unique browsers.") + "</p></div></div>", function () { self.adminView(s); });
-    document.getElementById("back").onclick = function () { self.go("me"); };
-    document.getElementById("lock").onclick = function () { try { localStorage.removeItem("dharmai-admin"); } catch (e) { } self.go("me"); };
+      (acc ? '<button class="btn danger small" id="delAcc"><i class="ti ti-trash"></i> ' + t("Delete my account") + "</button>" : "") + "</div>";
   },
 
   bind_me: function () {
@@ -989,7 +929,6 @@ DH.app = {
       };
     });
     var on = function (id, fn) { var el = document.getElementById(id); if (el) el.onclick = fn; };
-    on("openAdmin", function () { self.admin(); });
     // Community totals (fill in once they load).
     if (document.getElementById("community")) {
       DH.stats.get("/stats/public").then(function (s) {
