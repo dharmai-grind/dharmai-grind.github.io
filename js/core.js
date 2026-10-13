@@ -83,9 +83,13 @@ DH.stats = {
   track: function (kind, course) {
     if (!DH.ai.configured()) return;
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return; // don't count local testing
+    // If logged in, send the login token so this device is counted as that person.
+    var headers = { "Content-Type": "application/json" };
+    var acc = DH.store.state && DH.store.state.account;
+    if (acc && acc.token) headers.Authorization = "Bearer " + acc.token;
     try {
       fetch(DH.config.WORKER_URL.replace(/\/$/, "") + "/track", {
-        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        method: "POST", headers: headers, keepalive: true,
         body: JSON.stringify({ kind: kind, course: course || "", device: this.device() })
       }).catch(function () { });
     } catch (e) { }
@@ -128,6 +132,7 @@ DH.account = {
     var st = DH.store.state;
     st.account = { username: res.username, token: res.token };
     DH.store.save(true);
+    DH.stats.track("link"); // count this device's visits as this person from now on
     return DH.account.call("/progress/get").then(function (j) {
       var local = DH.store.portable();
       var hasLocal = !!local.prefs;

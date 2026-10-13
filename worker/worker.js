@@ -53,7 +53,7 @@ export default {
       }
       if (!env.DB) return reply({ error: "Accounts aren't set up yet (D1 binding named DB is missing)" }, 500);
       await ensureTables(env);
-      if (path === "/track") return reply(await track(body, env));
+      if (path === "/track") return reply(await track(body, env, (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "")));
       if (path === "/stats/public") return reply(await publicStats(env));
       const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
       const r = await accounts(path, body, token, env);
@@ -240,6 +240,9 @@ async function ensureTables(env) {
   // Analytics: daily counts per kind of event (and course), plus anonymous device IDs.
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS stats_daily (day TEXT NOT NULL, kind TEXT NOT NULL, course TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, kind, course))").run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS stats_devices (device TEXT PRIMARY KEY, first_day TEXT NOT NULL, last_day TEXT NOT NULL)").run();
+  // person: "u<account number>" once this device has been used logged in, so one
+  // person on several devices counts once. (Added later; ignore "already exists".)
+  try { await env.DB.prepare("ALTER TABLE stats_devices ADD COLUMN person TEXT").run(); } catch (e) { }
   tablesReady = true;
 }
 
@@ -248,7 +251,8 @@ async function ensureTables(env) {
 
 const today = () => new Date().toISOString().slice(0, 10);
 const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
-const TRACK_KINDS = ["open", "lesson_complete", "course_start"];
+// "link" only connects this device to the logged-in account (counts nothing).
+const TRACK_KINDS = ["open", "lesson_complete", "course_start", "link"];
 
 async function countEvent(env, kind, course) {
   if (!env.DB) return;
@@ -259,13 +263,18 @@ async function countEvent(env, kind, course) {
   } catch (e) { /* never let analytics break the app */ }
 }
 
-async function track(body, env) {
+async function track(body, env, token) {
   const kind = String(body.kind || ""), device = String(body.device || "");
   if (TRACK_KINDS.indexOf(kind) < 0 || !/^[a-f0-9]{16,40}$/.test(device)) return { ok: false };
   const d = today();
   await env.DB.prepare("INSERT INTO stats_devices (device, first_day, last_day) VALUES (?, ?, ?) ON CONFLICT(device) DO UPDATE SET last_day = excluded.last_day")
     .bind(device, d, d).run();
-  await countEvent(env, kind, kind === "open" ? "" : String(body.course || "").replace(/[^a-z0-9_-]/gi, ""));
+  // Logged in? Link this device (and its earlier visits) to the account.
+  if (token) {
+    const me = await userFromToken(env, token);
+    if (me) await env.DB.prepare("UPDATE stats_devices SET person = ? WHERE device = ?").bind("u" + me.id, device).run();
+  }
+  if (kind !== "link") await countEvent(env, kind, kind === "open" ? "" : String(body.course || "").replace(/[^a-z0-9_-]/gi, ""));
   return { ok: true };
 }
 
@@ -275,7 +284,8 @@ async function sumKind(env, kind) {
 }
 
 async function publicStats(env) {
-  const learners = await env.DB.prepare("SELECT COUNT(*) AS n FROM stats_devices").first();
+  // Unique people: each account once (all its devices), plus each guest device.
+  const learners = await env.DB.prepare("SELECT COUNT(DISTINCT COALESCE(person, 'd' || device)) AS n FROM stats_devices").first();
   return {
     learners: learners ? learners.n : 0,
     lessons: await sumKind(env, "lesson_complete"),
@@ -412,6 +422,7 @@ async function accounts(path, body, token, env) {
     await env.DB.batch([
       env.DB.prepare("DELETE FROM progress WHERE user_id = ?").bind(me.id),
       env.DB.prepare("DELETE FROM sessions WHERE user_id = ?").bind(me.id),
+      env.DB.prepare("DELETE FROM stats_devices WHERE person = ?").bind("u" + me.id), // their anonymous device records too
       env.DB.prepare("DELETE FROM users WHERE id = ?").bind(me.id),
     ]);
     return { body: { ok: true } };
