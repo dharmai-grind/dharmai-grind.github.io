@@ -266,9 +266,9 @@ DH.voice = {
     return "other";
   },
   isMultilingual: function (v) { return !!v && /multilingual/i.test(v.name); },
-  nameVoice: function (matchVoice, devanagariOnly) {
-    var pref = (((DH.store.state || {}).prefs) || {}).nameVoice || "auto";
-    // A multilingual voice can say the Indian words itself, in an Indian accent.
+  // prefOverride: force an order, e.g. "te" for verses (Telugu first).
+  nameVoice: function (matchVoice, devanagariOnly, prefOverride) {
+    var pref = prefOverride || (((DH.store.state || {}).prefs) || {}).nameVoice || "hi";
     var self = this, g = this.gender(matchVoice), fam = this.family(matchVoice);
     var order = this.NAME_MODES.filter(function (m) { return !(devanagariOnly && m[1] === "enin"); });
     if (pref !== "auto" && pref.indexOf("one-") !== 0) {
@@ -328,7 +328,10 @@ DH.voice = {
   },
   // Split English text into English runs and runs of Indian words.
   // Returns runs: { indic: false, text } for English, or
-  // { indic: true, orig: "Bhagavad Gītā", iast: ["bhagavad", "gītā"] } for Indian words.
+  // { indic: true, lang: "sa"|"ta", orig: "Bhagavad Gītā", iast: [...], raw: [...] }
+  // for Indian words. Tamil names and Sanskrit names are kept in separate runs,
+  // so each can go to its own voice. iast = form for Devanagari (Tamil words
+  // already voiced, e.g. āṇḍāḷ); raw = original spelling (for Tamil script).
   segments: function (text) {
     var self = this, segs = [];
     String(text).split(/([A-Za-zÀ-ÿĀ-ſḀ-ỿ']+(?:-[A-Za-zÀ-ÿĀ-ſḀ-ỿ']+)*)/).forEach(function (piece, idx) {
@@ -343,9 +346,11 @@ DH.voice = {
       }
       var parts = piece.split("-"), forms = parts.map(function (p) { return self.indicForm(p); });
       if (forms.some(function (f) { return f; })) {
-        var iast = parts.map(function (p, k) { return forms[k] || p.toLowerCase().replace(/'s$/, ""); });
-        if (last && last.indic) { last.orig += piece; last.iast = last.iast.concat(iast); }
-        else segs.push({ indic: true, orig: piece, iast: iast });
+        var raw = parts.map(function (p) { return p.toLowerCase().replace(/'s$/, ""); });
+        var iast = parts.map(function (p, k) { return forms[k] || raw[k]; });
+        var lang = raw.some(function (r) { return self.isTamil(r); }) ? "ta" : "sa";
+        if (last && last.indic && last.lang === lang) { last.orig += piece; last.iast = last.iast.concat(iast); last.raw = last.raw.concat(raw); }
+        else segs.push({ indic: true, lang: lang, orig: piece, iast: iast, raw: raw });
       } else if (last && !last.indic) last.text += piece;
       else segs.push({ indic: false, text: piece });
     });
@@ -354,6 +359,35 @@ DH.voice = {
       return s;
     });
   },
+  // Tamil names → Tamil script, from their original spelling (a Tamil voice then
+  // applies Tamil sound rules itself: ஆண்டாள் is read "Andal").
+  TA_VOW: { "a": ["அ", ""], "ā": ["ஆ", "ா"], "i": ["இ", "ி"], "ī": ["ஈ", "ீ"], "u": ["உ", "ு"], "ū": ["ஊ", "ூ"],
+    "e": ["எ", "ெ"], "ē": ["ஏ", "ே"], "ai": ["ஐ", "ை"], "o": ["ஒ", "ொ"], "ō": ["ஓ", "ோ"], "au": ["ஔ", "ௌ"] },
+  TA_CONS: { "k": "க", "g": "க", "ṅ": "ங", "c": "ச", "j": "ஜ", "ñ": "ஞ", "ṭ": "ட", "ḍ": "ட", "ṇ": "ண", "t": "த", "d": "த",
+    "n": "ந", "p": "ப", "b": "ப", "m": "ம", "y": "ய", "r": "ர", "l": "ல", "v": "வ", "ḻ": "ழ", "ḷ": "ள", "ṟ": "ற", "ṉ": "ன",
+    "ś": "ஶ", "ṣ": "ஷ", "s": "ஸ", "h": "ஹ" },
+  toTamil: function (w) {
+    var out = "", i = 0, prevCons = false, C = this.TA_CONS, V = this.TA_VOW;
+    while (i < w.length) {
+      var two = w.substr(i, 2), one = w.charAt(i);
+      if (V[two] || V[one]) {
+        var v = V[two] ? two : one;
+        out += prevCons ? V[v][1] : V[v][0];
+        prevCons = false; i += v.length; continue;
+      }
+      if (C[one]) { if (prevCons) out += "்"; out += C[one]; prevCons = true; i++; continue; }
+      if (prevCons) out += "்";
+      out += one; prevCons = false; i++;
+    }
+    if (prevCons) out += "்";
+    return out;
+  },
+  // A Tamil voice of the given gender (or any Tamil voice), or null.
+  tamilVoice: function (matchVoice) {
+    var self = this, g = this.gender(matchVoice), list = this.forLang("ta");
+    return (g && list.find(function (v) { return self.gender(v) === g; })) || list[0] || null;
+  },
+
   // Guess a voice's gender from its name, to pair similar-sounding voices.
   gender: function (v) {
     var n = (v && v.name || "").toLowerCase();
@@ -402,7 +436,7 @@ DH.voice = {
     };
     var mainVoice = self.pick(DH.lang());
     // Decide gender once for the whole reading, so it never flips between parts.
-    var np = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
+    var np = ((DH.store.state.prefs) || {}).nameVoice || "hi";
     if (mainVoice && np !== "one-main" && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
       var nv0 = self.nameVoice(mainVoice, false);
       var g0 = self.gender(mainVoice), g1 = nv0 && self.gender(nv0.voice);
@@ -417,7 +451,7 @@ DH.voice = {
         // Verses always get a real Indian voice: Telugu first (keeps final
         // vowels), then Kannada, then Hindi; same gender as the main voice if
         // possible. Only with none of these does the main voice read it.
-        var sv = self.nameVoice(mainVoice, true);
+        var sv = self.nameVoice(mainVoice, true, "te"); // verses: Telugu first
         if (!sv) {
           if (p.iast && mainVoice) add(self.respellUS(p.iast, true), mainVoice); else missing = true;
           return;
@@ -431,7 +465,7 @@ DH.voice = {
       if (raw) { add(text, voice); return; }
       if (self.INDIC.indexOf(voice.lang.toLowerCase().split(/[-_]/)[0]) >= 0) { add(text, voice); return; }
       // "One voice for everything" settings: no switching at all.
-      var namePref = ((DH.store.state.prefs) || {}).nameVoice || "one-main";
+      var namePref = ((DH.store.state.prefs) || {}).nameVoice || "hi";
       if (namePref === "one-main" && /^en/i.test(voice.lang)) { add(self.respellUS(text), voice); return; } // "one American voice" setting
       if (namePref === "one-enin" && /^en/i.test(voice.lang)) {
         var ie = self.indianEnglish(voice);
@@ -451,17 +485,24 @@ DH.voice = {
       if (!nv.voice.localService) warm = warm || nv.voice; // online voices are slow to start
       // Fewer switches = smoother: short linking words between two Indian runs
       // ("Rāmānuja and Śaṅkara") are said by the Indian voice too.
+      // Tamil names go to a Tamil voice (same gender) when the device has one.
+      var tv = self.tamilVoice(voice);
+      if (tv && !tv.localService) warm = warm || tv;
       var segs = self.segments(text), merged = [];
       segs.forEach(function (s, i) {
         var prev = merged[merged.length - 1], next = segs[i + 1];
-        var link = !s.indic && prev && prev.indic && next && next.indic &&
+        var useTa = s.indic && s.lang === "ta" && tv;
+        var who = !s.indic ? "en" : useTa ? "ta" : "in";
+        // Linking words join two runs only if both go to the same Indian voice.
+        var nextWho = next && next.indic ? (next.lang === "ta" && tv ? "ta" : "in") : "en";
+        var link = !s.indic && prev && prev.who !== "en" && prev.who === nextWho &&
           /^(,|and|or|of|the|in|to|a|an|&|vs\.?|,? and|,? or)$/i.test(s.text.trim());
         if (link) { prev.spoken += " " + s.text.trim() + " "; prev.join = true; return; }
-        var spoken = s.indic ? self.forMode(s, nv.mode) : s.text;
-        if (s.indic && prev && prev.indic && prev.join) { prev.spoken += spoken; prev.join = false; return; }
-        merged.push({ indic: s.indic, spoken: spoken });
+        var spoken = !s.indic ? s.text : useTa ? s.raw.map(self.toTamil, self).join(" ") : self.forMode(s, nv.mode);
+        if (s.indic && prev && prev.who === who && prev.join) { prev.spoken += spoken; prev.join = false; return; }
+        merged.push({ who: who, spoken: spoken });
       });
-      merged.forEach(function (m) { add(m.spoken, m.indic ? nv.voice : voice); });
+      merged.forEach(function (m) { add(m.spoken, m.who === "en" ? voice : m.who === "ta" ? tv : nv.voice); });
     });
     // Warm up an online Indian voice silently first, so it doesn't pause mid-sentence.
     if (warm) {

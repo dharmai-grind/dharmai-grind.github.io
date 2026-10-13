@@ -857,17 +857,17 @@ DH.app = {
           (voices.length ? "" : '<p class="small warn">' + t("Your device has no voice for this language yet. You can add one in your device's language or speech settings.") + "</p>") +
           (function () {
             var nv = DH.voice.nameVoice(DH.voice.pick(DH.lang()), false);
-            var cur2 = p.nameVoice || "one-main";
+            var cur2 = p.nameVoice || "hi";
             var opt = function (v, label) { return '<option value="' + v + '"' + (cur2 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
             var one = cur2 === "one-main";
             var cur3 = p.stressStyle || "caps";
             var opt3 = function (v, label) { return '<option value="' + v + '"' + (cur3 === v ? " selected" : "") + ">" + t(label) + "</option>"; };
             return '<label class="field"><span>' + t("Voice for Sanskrit and Indian names") + '</span><select data-pref="nameVoice">' +
-              opt("one-main", "One American voice for everything (recommended)") +
+              opt("hi", "Hindi voice for Indian names (recommended)") + opt("one-main", "One American voice for everything (names spelled out)") +
               opt("auto", "Switch to an Indian voice for names (same gender)") +
               opt("one-enin", "One Indian English voice for everything") +
               opt("te", "Switch to a Telugu voice for names") + opt("kn", "Switch to a Kannada voice for names") +
-              opt("enin", "Switch to an Indian English voice for names") + opt("hi", "Switch to a Hindi voice for names (drops the final 'a')") +
+              opt("enin", "Switch to an Indian English voice for names") +
               "</select></label>" +
               '<p class="small">' + (one ? t("Indian words are spelled out by their sounds for your main voice, with the stressed syllable worked out (Navarātri → nuhvuhRAHtree).")
                 : nv ? t("In use on this device:") + " " + DH.esc(nv.voice.name) : t("That voice isn't on this device, so names are respelled for your main voice.")) + "</p>" +
