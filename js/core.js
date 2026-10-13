@@ -80,9 +80,34 @@ DH.stats = {
     }
     return id;
   },
-  track: function (kind, course) {
-    if (!DH.ai.configured()) return;
-    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return; // don't count local testing
+  counting: function () {
+    return DH.ai.configured() && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname); // don't count local testing
+  },
+  // A finished lesson is counted once ever (per person: the list syncs with accounts).
+  lessonDone: function (courseId, lessonId) {
+    var st = DH.store.state;
+    st.reported = st.reported || {};
+    if (!this.counting() || st.reported[lessonId]) return;
+    st.reported[lessonId] = 1;
+    this.track("lesson_complete", courseId);
+  },
+  // Catch up: count lessons finished before counting existed (or on an old version).
+  catchUp: function () {
+    var st = DH.store.state, self = this;
+    if (!this.counting() || !st.progress) return;
+    st.reported = st.reported || {};
+    var changed = false;
+    Object.keys(st.progress).forEach(function (cid) {
+      var fresh = ((st.progress[cid] || {}).done || []).filter(function (id) { return !st.reported[id]; });
+      if (!fresh.length) return;
+      fresh.forEach(function (id) { st.reported[id] = 1; });
+      self.track("lesson_complete", cid, fresh.length);
+      changed = true;
+    });
+    if (changed) DH.store.save();
+  },
+  track: function (kind, course, count) {
+    if (!this.counting()) return;
     // If logged in, send the login token so this device is counted as that person.
     var headers = { "Content-Type": "application/json" };
     var acc = DH.store.state && DH.store.state.account;
@@ -90,7 +115,7 @@ DH.stats = {
     try {
       fetch(DH.config.WORKER_URL.replace(/\/$/, "") + "/track", {
         method: "POST", headers: headers, keepalive: true,
-        body: JSON.stringify({ kind: kind, course: course || "", device: this.device() })
+        body: JSON.stringify({ kind: kind, course: course || "", count: count || 1, device: this.device() })
       }).catch(function () { });
     } catch (e) { }
   },

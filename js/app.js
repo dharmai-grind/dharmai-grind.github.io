@@ -14,6 +14,7 @@ DH.app = {
     else this.go(this.tab);
     // If logged in, pick up progress made on another device.
     DH.account.pull().then(function (changed) {
+      DH.stats.catchUp(); // count lessons finished before counting existed (after any account sync)
       if (!changed) return;
       self.applyDir();
       if (DH.store.state.prefs && !document.querySelector(".lesson")) self.go(self.tab);
@@ -267,6 +268,7 @@ DH.app = {
   },
 
   afterAuth: function () {
+    DH.stats.catchUp();
     if (DH.store.state.prefs) this.go("learn");
     else this.onboard(1, {});
   },

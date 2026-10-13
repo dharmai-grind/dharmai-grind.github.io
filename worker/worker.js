@@ -254,12 +254,13 @@ const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0
 // "link" only connects this device to the logged-in account (counts nothing).
 const TRACK_KINDS = ["open", "lesson_complete", "course_start", "link"];
 
-async function countEvent(env, kind, course) {
+async function countEvent(env, kind, course, inc) {
   if (!env.DB) return;
+  inc = Math.max(1, Math.min(500, parseInt(inc, 10) || 1));
   try {
     await ensureTables(env);
-    await env.DB.prepare("INSERT INTO stats_daily (day, kind, course, n) VALUES (?, ?, ?, 1) ON CONFLICT(day, kind, course) DO UPDATE SET n = n + 1")
-      .bind(today(), kind, clip(course, 40)).run();
+    await env.DB.prepare("INSERT INTO stats_daily (day, kind, course, n) VALUES (?, ?, ?, ?) ON CONFLICT(day, kind, course) DO UPDATE SET n = n + excluded.n")
+      .bind(today(), kind, clip(course, 40), inc).run();
   } catch (e) { /* never let analytics break the app */ }
 }
 
@@ -274,7 +275,9 @@ async function track(body, env, token) {
     const me = await userFromToken(env, token);
     if (me) await env.DB.prepare("UPDATE stats_devices SET person = ? WHERE device = ?").bind("u" + me.id, device).run();
   }
-  if (kind !== "link") await countEvent(env, kind, kind === "open" ? "" : String(body.course || "").replace(/[^a-z0-9_-]/gi, ""));
+  // count: catching up several past lessons at once (lesson_complete only).
+  const inc = kind === "lesson_complete" ? body.count : 1;
+  if (kind !== "link") await countEvent(env, kind, kind === "open" ? "" : String(body.course || "").replace(/[^a-z0-9_-]/gi, ""), inc);
   return { ok: true };
 }
 
