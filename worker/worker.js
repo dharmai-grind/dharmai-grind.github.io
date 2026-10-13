@@ -23,7 +23,7 @@ export default {
     const cors = {
       "Access-Control-Allow-Origin": allowed.includes(origin) ? origin : allowed[0],
       "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Admin-Code",
       "Vary": "Origin",
     };
     if (request.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -47,12 +47,19 @@ export default {
     try {
       if (path === "/ask" || path === "/debate" || path === "/translate") {
         if (!env.AI) return reply({ error: "Workers AI binding named AI is missing" }, 500);
-        if (path === "/ask") return reply(await ask(body, env));
-        if (path === "/debate") return reply(await debate(body, env));
+        if (path === "/ask") { await countEvent(env, "ask", ""); return reply(await ask(body, env)); }
+        if (path === "/debate") { if (body.action !== "summary") await countEvent(env, "debate", ""); return reply(await debate(body, env)); }
         return reply(await translate(body, env));
       }
       if (!env.DB) return reply({ error: "Accounts aren't set up yet (D1 binding named DB is missing)" }, 500);
       await ensureTables(env);
+      if (path === "/track") return reply(await track(body, env));
+      if (path === "/stats/public") return reply(await publicStats(env));
+      if (path === "/stats/admin") {
+        const code = request.headers.get("X-Admin-Code") || "";
+        if (!env.ADMIN_CODE || !sameHex(await sha256(code), await sha256(env.ADMIN_CODE))) return reply({ error: "Wrong admin code." }, 401);
+        return reply(await adminStats(env));
+      }
       const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
       const r = await accounts(path, body, token, env);
       return reply(r.body, r.status || 200);
@@ -235,7 +242,74 @@ async function ensureTables(env) {
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT UNIQUE NOT NULL, pass_salt TEXT NOT NULL, pass_hash TEXT NOT NULL, rec_salt TEXT NOT NULL, rec_hash TEXT NOT NULL, created INTEGER NOT NULL, fails INTEGER NOT NULL DEFAULT 0, locked_until INTEGER NOT NULL DEFAULT 0)").run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS sessions (token_hash TEXT PRIMARY KEY, user_id INTEGER NOT NULL, created INTEGER NOT NULL)").run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS progress (user_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated INTEGER NOT NULL)").run();
+  // Analytics: daily counts per kind of event (and course), plus anonymous device IDs.
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS stats_daily (day TEXT NOT NULL, kind TEXT NOT NULL, course TEXT NOT NULL DEFAULT '', n INTEGER NOT NULL DEFAULT 0, PRIMARY KEY (day, kind, course))").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS stats_devices (device TEXT PRIMARY KEY, first_day TEXT NOT NULL, last_day TEXT NOT NULL)").run();
   tablesReady = true;
+}
+
+// ===================== Analytics =====================
+// Anonymous: a random ID per browser, no names or personal details.
+
+const today = () => new Date().toISOString().slice(0, 10);
+const daysAgo = (n) => new Date(Date.now() - n * 86400000).toISOString().slice(0, 10);
+const TRACK_KINDS = ["open", "lesson_complete", "course_start"];
+
+async function countEvent(env, kind, course) {
+  if (!env.DB) return;
+  try {
+    await ensureTables(env);
+    await env.DB.prepare("INSERT INTO stats_daily (day, kind, course, n) VALUES (?, ?, ?, 1) ON CONFLICT(day, kind, course) DO UPDATE SET n = n + 1")
+      .bind(today(), kind, clip(course, 40)).run();
+  } catch (e) { /* never let analytics break the app */ }
+}
+
+async function track(body, env) {
+  const kind = String(body.kind || ""), device = String(body.device || "");
+  if (TRACK_KINDS.indexOf(kind) < 0 || !/^[a-f0-9]{16,40}$/.test(device)) return { ok: false };
+  const d = today();
+  await env.DB.prepare("INSERT INTO stats_devices (device, first_day, last_day) VALUES (?, ?, ?) ON CONFLICT(device) DO UPDATE SET last_day = excluded.last_day")
+    .bind(device, d, d).run();
+  await countEvent(env, kind, kind === "open" ? "" : String(body.course || "").replace(/[^a-z0-9_-]/gi, ""));
+  return { ok: true };
+}
+
+async function sumKind(env, kind) {
+  const r = await env.DB.prepare("SELECT COALESCE(SUM(n), 0) AS n FROM stats_daily WHERE kind = ?").bind(kind).first();
+  return r ? r.n : 0;
+}
+
+async function publicStats(env) {
+  const learners = await env.DB.prepare("SELECT COUNT(*) AS n FROM stats_devices").first();
+  return {
+    learners: learners ? learners.n : 0,
+    lessons: await sumKind(env, "lesson_complete"),
+    questions: await sumKind(env, "ask"),
+    debates: await sumKind(env, "debate"),
+  };
+}
+
+async function adminStats(env) {
+  const one = async (sql, ...args) => { const r = await env.DB.prepare(sql).bind(...args).first(); return r ? r.n : 0; };
+  const all = async (sql, ...args) => (await env.DB.prepare(sql).bind(...args).all()).results || [];
+  return {
+    totals: {
+      learners: await one("SELECT COUNT(*) AS n FROM stats_devices"),
+      accounts: await one("SELECT COUNT(*) AS n FROM users"),
+      lessons: await sumKind(env, "lesson_complete"),
+      coursesStarted: await sumKind(env, "course_start"),
+      questions: await sumKind(env, "ask"),
+      debates: await sumKind(env, "debate"),
+    },
+    active: {
+      today: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", today()),
+      week: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", daysAgo(6)),
+      month: await one("SELECT COUNT(*) AS n FROM stats_devices WHERE last_day >= ?", daysAgo(29)),
+    },
+    courses: await all("SELECT course, kind, SUM(n) AS n FROM stats_daily WHERE kind IN ('lesson_complete', 'course_start') GROUP BY course, kind"),
+    daily: await all("SELECT day, kind, SUM(n) AS n FROM stats_daily WHERE day >= ? GROUP BY day, kind ORDER BY day", daysAgo(29)),
+    newLearners: await all("SELECT first_day AS day, COUNT(*) AS n FROM stats_devices WHERE first_day >= ? GROUP BY first_day ORDER BY first_day", daysAgo(29)),
+  };
 }
 
 const enc = new TextEncoder();

@@ -38,10 +38,11 @@ if (-not $account) { throw "Couldn't find a Worker named '$ScriptName' in your a
 Write-Output "Found Worker '$ScriptName' in account '$($account.name)'"
 
 # 3. Keep the existing bindings (AI, DB) and compatibility date.
-$bindings = @($settings.bindings)
-Write-Output ("Keeping bindings: " + (($bindings | ForEach-Object { "$($_.name) ($($_.type))" }) -join ", "))
+# Secrets (like ADMIN_CODE) can't be re-sent here; keep_bindings tells Cloudflare to keep them.
+$bindings = @($settings.bindings | Where-Object { $_.type -ne "secret_text" })
+Write-Output ("Keeping bindings: " + (($settings.bindings | ForEach-Object { "$($_.name) ($($_.type))" }) -join ", "))
 $compat = if ($settings.compatibility_date) { $settings.compatibility_date } else { "2025-01-01" }
-$metadata = @{ main_module = "worker.js"; compatibility_date = $compat; bindings = $bindings }
+$metadata = @{ main_module = "worker.js"; compatibility_date = $compat; bindings = $bindings; keep_bindings = @("secret_text") }
 if ($settings.compatibility_flags) { $metadata.compatibility_flags = @($settings.compatibility_flags) }
 $metaJson = $metadata | ConvertTo-Json -Depth 10 -Compress
 

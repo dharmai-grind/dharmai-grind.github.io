@@ -414,7 +414,7 @@ DH.Lesson.prototype.finish = function () {
   var self = this, st = DH.store.state;
   var prog = st.progress[self.course.id] = st.progress[self.course.id] || { done: [] };
   var firstTime = prog.done.indexOf(self.lesson.id) < 0;
-  if (firstTime) prog.done.push(self.lesson.id);
+  if (firstTime) { prog.done.push(self.lesson.id); DH.stats.track("lesson_complete", self.course.id); }
   var bonus = firstTime ? 15 : 5;
   self.xp += bonus;
   st.xp += self.xp;

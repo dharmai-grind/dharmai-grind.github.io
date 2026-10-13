@@ -65,6 +65,47 @@ DH.store = {
   }
 };
 
+// ---------- Anonymous usage stats ----------
+// A random ID for this browser (no names or personal details), used only to
+// count unique learners. Events: daily app open, lesson completed, course started.
+DH.stats = {
+  device: function () {
+    var id = null;
+    try { id = localStorage.getItem("dharmai-device"); } catch (e) { }
+    if (!id) {
+      var b = new Uint8Array(12);
+      (window.crypto || window.msCrypto).getRandomValues(b);
+      id = Array.from(b).map(function (x) { return x.toString(16).padStart(2, "0"); }).join("");
+      try { localStorage.setItem("dharmai-device", id); } catch (e) { }
+    }
+    return id;
+  },
+  track: function (kind, course) {
+    if (!DH.ai.configured()) return;
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return; // don't count local testing
+    try {
+      fetch(DH.config.WORKER_URL.replace(/\/$/, "") + "/track", {
+        method: "POST", headers: { "Content-Type": "application/json" }, keepalive: true,
+        body: JSON.stringify({ kind: kind, course: course || "", device: this.device() })
+      }).catch(function () { });
+    } catch (e) { }
+  },
+  // Counts an app open at most once per day per browser.
+  open: function () {
+    var day = DH.today(), last = null;
+    try { last = localStorage.getItem("dharmai-open-day"); } catch (e) { }
+    if (last === day) return;
+    try { localStorage.setItem("dharmai-open-day", day); } catch (e) { }
+    this.track("open");
+  },
+  get: function (path, code) {
+    var headers = { "Content-Type": "application/json" };
+    if (code) headers["X-Admin-Code"] = code;
+    return fetch(DH.config.WORKER_URL.replace(/\/$/, "") + path, { method: "POST", headers: headers, body: "{}" })
+      .then(function (r) { return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || "Error"); return j; }); });
+  }
+};
+
 // ---------- Accounts (username + password, no email) ----------
 DH.account = {
   timer: null,

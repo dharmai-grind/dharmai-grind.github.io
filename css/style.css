@@ -274,6 +274,23 @@ input:focus, textarea:focus, select:focus { border-color: var(--blue); }
 .voice-row .field { flex: 1; margin-bottom: 10px; }
 .voice-row .btn { margin-bottom: 10px; }
 
+/* analytics */
+.stats.community { max-width: none; }
+.admin-link { text-align: center; margin-top: 24px; font-size: 0.8rem; }
+.admin .lesson-top { margin-bottom: 4px; }
+.admin .lesson-top b { flex: 1; font-size: 1.1rem; }
+.stats.grid3 { grid-template-columns: repeat(3, 1fr); max-width: none; }
+.admin .stats { max-width: none; }
+.chart { display: flex; align-items: flex-end; gap: 2px; height: 120px; border-bottom: 2px solid var(--line); padding-top: 6px; }
+.chart .day { flex: 1; height: 100%; display: flex; align-items: flex-end; gap: 1px; }
+.chart i { flex: 1; border-radius: 3px 3px 0 0; min-height: 1px; }
+.chart .b-open, .legend .k-open { background: var(--teal); }
+.chart .b-lesson, .legend .k-lesson { background: var(--saffron); }
+.legend span { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
+.ctable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ctable th, .ctable td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); }
+.ctable th:not(:first-child), .ctable td:not(:first-child) { text-align: right; }
+
 /* folding sections (Special settings) */
 .fold { border: 2px solid var(--line); border-radius: 16px; margin: 14px 0 4px; background: var(--card); }
 .fold summary { cursor: pointer; padding: 12px 14px; font-weight: 800; list-style: none; display: flex; align-items: center; gap: 8px; }
