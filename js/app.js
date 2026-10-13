@@ -10,8 +10,11 @@ DH.app = {
     DH.voice.init();
     DH.stats.open();
     this.applyDir();
-    if (!DH.store.state.prefs) this.onboard(0, {});
-    else this.go(this.tab);
+    // A screen error must never stop the background steps below (sync, counting).
+    try {
+      if (!DH.store.state.prefs) this.onboard(0, {});
+      else this.go(this.tab);
+    } catch (e) { console.error(e); }
     // If logged in, pick up progress made on another device.
     DH.account.pull().then(function (changed) {
       DH.stats.catchUp(); // count lessons finished before counting existed (after any account sync)
@@ -354,8 +357,14 @@ DH.app = {
 
   screen_learn: function () {
     var st = DH.store.state, self = this;
-    if (!st.active || !DH.COURSES[st.active]) st.active = st.courses[0];
+    st.courses = (st.courses || []).filter(function (id) { return DH.COURSES[id]; });
+    if (!st.active || !DH.COURSES[st.active] || st.courses.indexOf(st.active) < 0) st.active = st.courses[0];
     var course = DH.COURSES[st.active];
+    // No courses yet: invite them to pick one instead of crashing.
+    if (!course) {
+      return '<div class="ask-empty">' + DH.angada(110, "happy") + "<h1>" + DH.t("Pick a course to start") + "</h1><p>" +
+        DH.t("Choose a festival, a philosophical school, a work of literature or a topic.") + '</p><button class="btn primary" data-tab="courses">' + DH.t("See courses") + "</button></div>";
+    }
     var chips = '<div class="course-chips">' + st.courses.map(function (id) {
       var c = DH.COURSES[id];
       return '<button class="chip ' + (id === st.active ? "on " + c.color : "") + '" data-course="' + id + '"><i class="ti ' + c.icon + '"></i> ' + DH.t(c.title) + "</button>";
