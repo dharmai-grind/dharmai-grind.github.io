@@ -557,8 +557,12 @@ DH.voice = {
   },
 
   // A speaker button. parts: [{ text, lang }]
+  // Off by default; turned on in Profile ("Read-aloud").
+  enabled: function () {
+    return this.supported && ((DH.store.state || {}).prefs || {}).readAloud === "on";
+  },
   button: function (parts, label) {
-    if (!this.supported) return "";
+    if (!this.enabled()) return "";
     return '<button class="say-btn" data-say="' + DH.esc(JSON.stringify(parts)) + '" aria-label="' + DH.esc(DH.tr(label || "Read aloud")) + '" title="' + DH.esc(DH.tr(label || "Read aloud")) + '"><i class="ti ti-volume"></i></button>';
   },
 

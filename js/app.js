@@ -849,6 +849,12 @@ DH.app = {
       '<label class="field"><span>' + t("Debates") + "</span>" + sel("debate", [["choose", "Yes, I pick my side"], ["assign", "Yes, assign me a side"], ["both", "Yes, let me argue both sides"], ["none", "No debates, just lessons"]]) + "</label>" +
       (function () {
         if (!DH.voice.supported) return "";
+        // Read-aloud is off by default; the voice options only show when it's on.
+        var toggle = '<label class="field"><span>' + t("Read-aloud") + '</span><select data-pref="readAloud">' +
+          '<option value="off"' + (p.readAloud === "on" ? "" : " selected") + ">" + t("Off: no speaker buttons") + "</option>" +
+          '<option value="on"' + (p.readAloud === "on" ? " selected" : "") + ">" + t("On: show speaker buttons to hear lessons and answers") + "</option></select></label>";
+        if (p.readAloud !== "on") return toggle;
+        return toggle + (function () {
         var voices = DH.voice.forLang(DH.lang());
         var cur = p.voice || "auto";
         return '<label class="field"><span>' + t("Read-aloud voice") + '</span><select data-pref="voice">' +
@@ -879,6 +885,7 @@ DH.app = {
           })() +
           '<div class="voice-row"><label class="field"><span>' + t("Reading speed") + "</span>" + sel("rate", [["0.85", "Slower"], ["1", "Normal"], ["1.15", "Faster"]]) + "</label>" +
           '<button class="btn small" id="testVoice"><i class="ti ti-volume"></i> ' + t("Test") + "</button></div>";
+      })();
       })() +
       // Special settings: folded away; one fold per course that has unit levels.
       (function () {
@@ -916,7 +923,7 @@ DH.app = {
         st.prefs[el.dataset.pref] = el.value.trim();
         DH.store.save();
         if (el.dataset.pref === "lang") { self.applyDir(); self.go("me"); return; }
-        if (el.dataset.pref === "nameVoice" || el.dataset.pref === "voice") { self.go("me"); return; } // refresh "In use"
+        if (el.dataset.pref === "nameVoice" || el.dataset.pref === "voice" || el.dataset.pref === "readAloud") { self.go("me"); return; } // refresh "In use"
         document.getElementById("saved").textContent = DH.tr("Saved");
       };
     });
