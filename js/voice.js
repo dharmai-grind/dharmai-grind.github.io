@@ -81,7 +81,15 @@ DH.voice = {
   // (Āṇṭāḷ is said "Andal"). A word counts as Tamil if it has Tamil-only letters
   // (ḻ ṟ ṉ ē ō) or is in this list of Tamil names used in our lessons.
   TAMIL_WORDS: ["āṇṭāḷ", "piḷḷai", "maṇavāḷa", "tiruppāvai", "tiruvaṇṇāmalai", "tirukkōṭṭiyūr", "nambi", "kōḻi", "nālāyira", "pōtuvīr"],
+  // Language label from js/data/lexicon.js ("ta", "kn", ...), or null if unlisted.
+  lexLang: function (lower) {
+    var L = DH.LEXICON || {};
+    lower = lower.replace(/'s$/, "");
+    return L[lower] || (/s$/.test(lower) && L[lower.slice(0, -1)]) || null; // Āḻvārs → Āḻvār
+  },
   isTamil: function (lower) {
+    var lab = this.lexLang(lower);
+    if (lab) return lab === "ta";
     return /[ḻṟṉēō]/.test(lower) || this.TAMIL_WORDS.indexOf(lower) >= 0;
   },
   tamilVoicing: function (w) {
@@ -244,7 +252,7 @@ DH.voice = {
   // Telugu and Kannada scripts sit at a fixed offset from Devanagari in
   // Unicode, letter for letter, so converting is just shifting code points.
   // Their voices keep the final "a" (Hindi voices drop it: "Shankar").
-  SCRIPT_OFFSET: { te: 0x300, kn: 0x380 },
+  SCRIPT_OFFSET: { te: 0x300, kn: 0x380, ml: 0x400, gu: 0x180 },
   fromDeva: function (deva, script) {
     var off = this.SCRIPT_OFFSET[script];
     if (!off) return deva;
@@ -321,6 +329,9 @@ DH.voice = {
   // The IAST form of a word if it's an Indian word, else null.
   indicForm: function (word) {
     var lower = word.toLowerCase().replace(/'s$/, ""); // Āṇṭāḷ's → Āṇṭāḷ
+    var lab = this.lexLang(lower);
+    if (lab === "en") return null; // labeled non-Indian (e.g. al-Bīrūnī): main voice reads it
+    if (lab) return lab === "ta" ? this.tamilVoicing(lower) : lower;
     if (this.PLAIN_INDIC[lower]) return this.PLAIN_INDIC[lower];
     if (this.TAMIL_WORDS.indexOf(lower) >= 0) return this.tamilVoicing(lower);
     if (/[āīūṛṝḷṅṭḍṇśṣḥṃṁēōḻṟṉ]|jñ/.test(lower)) return this.isTamil(lower) ? this.tamilVoicing(lower) : lower;
@@ -348,7 +359,9 @@ DH.voice = {
       if (forms.some(function (f) { return f; })) {
         var raw = parts.map(function (p) { return p.toLowerCase().replace(/'s$/, ""); });
         var iast = parts.map(function (p, k) { return forms[k] || raw[k]; });
-        var lang = raw.some(function (r) { return self.isTamil(r); }) ? "ta" : "sa";
+        // Language from the lexicon labels; unlisted words are Sanskrit (or Tamil if they have Tamil-only letters).
+        var labs = raw.map(function (r) { return self.lexLang(r) || (self.isTamil(r) ? "ta" : "sa"); });
+        var lang = labs.find(function (l) { return l !== "sa"; }) || "sa";
         if (last && last.indic && last.lang === lang) { last.orig += piece; last.iast = last.iast.concat(iast); last.raw = last.raw.concat(raw); }
         else segs.push({ indic: true, lang: lang, orig: piece, iast: iast, raw: raw });
       } else if (last && !last.indic) last.text += piece;
@@ -382,10 +395,21 @@ DH.voice = {
     if (prevCons) out += "்";
     return out;
   },
-  // A Tamil voice of the given gender (or any Tamil voice), or null.
-  tamilVoice: function (matchVoice) {
-    var self = this, g = this.gender(matchVoice), list = this.forLang("ta");
+  // A voice for a language, same gender as matchVoice if possible, or null.
+  langVoice: function (lang, matchVoice) {
+    var self = this, g = this.gender(matchVoice), list = this.forLang(lang);
     return (g && list.find(function (v) { return self.gender(v) === g; })) || list[0] || null;
+  },
+  tamilVoice: function (matchVoice) { return this.langVoice("ta", matchVoice); },
+  // How to say one run of Indian words: { voice, text }. Each language goes to
+  // its own voice in its own script; with no such voice, Hindi reads Devanagari.
+  sayIndic: function (seg, mainVoice, hindi) {
+    var deva = function () { return seg.iast.map(this.toDeva, this).join(" "); }.bind(this);
+    var lang = seg.lang, v;
+    if (lang === "ta" && (v = this.langVoice("ta", mainVoice))) return { voice: v, text: seg.raw.map(this.toTamil, this).join(" ") };
+    if (/^(kn|te|ml|gu)$/.test(lang) && (v = this.langVoice(lang, mainVoice))) return { voice: v, text: this.fromDeva(deva(), lang) };
+    if (lang === "mr" && (v = this.langVoice("mr", mainVoice))) return { voice: v, text: deva() };
+    return { voice: hindi.voice, text: this.forMode(seg, hindi.mode) };
   },
 
   // Guess a voice's gender from its name, to pair similar-sounding voices.
@@ -482,27 +506,27 @@ DH.voice = {
       if (gm && gn && gm !== gn && (((DH.store.state.prefs) || {}).voice || "auto") === "auto") {
         voice = self.sameGenderMain(lang, gn) || voice;
       }
-      if (!nv.voice.localService) warm = warm || nv.voice; // online voices are slow to start
+
       // Fewer switches = smoother: short linking words between two Indian runs
       // ("Rāmānuja and Śaṅkara") are said by the Indian voice too.
-      // Tamil names go to a Tamil voice (same gender) when the device has one.
-      var tv = self.tamilVoice(voice);
-      if (tv && !tv.localService) warm = warm || tv;
-      var segs = self.segments(text), merged = [];
+      // Each run of Indian words goes to the voice for its labeled language.
+      var segs = self.segments(text).map(function (s) {
+        if (!s.indic) return { who: "en", voice: voice, spoken: s.text, text: s.text };
+        var r = self.sayIndic(s, voice, nv);
+        if (r.voice && !r.voice.localService) warm = warm || r.voice; // online voices are slow to start
+        return { who: r.voice.voiceURI, voice: r.voice, spoken: r.text };
+      });
+      var merged = [];
       segs.forEach(function (s, i) {
         var prev = merged[merged.length - 1], next = segs[i + 1];
-        var useTa = s.indic && s.lang === "ta" && tv;
-        var who = !s.indic ? "en" : useTa ? "ta" : "in";
         // Linking words join two runs only if both go to the same Indian voice.
-        var nextWho = next && next.indic ? (next.lang === "ta" && tv ? "ta" : "in") : "en";
-        var link = !s.indic && prev && prev.who !== "en" && prev.who === nextWho &&
+        var link = s.who === "en" && prev && prev.who !== "en" && next && next.who === prev.who &&
           /^(,|and|or|of|the|in|to|a|an|&|vs\.?|,? and|,? or)$/i.test(s.text.trim());
         if (link) { prev.spoken += " " + s.text.trim() + " "; prev.join = true; return; }
-        var spoken = !s.indic ? s.text : useTa ? s.raw.map(self.toTamil, self).join(" ") : self.forMode(s, nv.mode);
-        if (s.indic && prev && prev.who === who && prev.join) { prev.spoken += spoken; prev.join = false; return; }
-        merged.push({ who: who, spoken: spoken });
+        if (s.who !== "en" && prev && prev.who === s.who && prev.join) { prev.spoken += s.spoken; prev.join = false; return; }
+        merged.push({ who: s.who, voice: s.voice, spoken: s.spoken });
       });
-      merged.forEach(function (m) { add(m.spoken, m.who === "en" ? voice : m.who === "ta" ? tv : nv.voice); });
+      merged.forEach(function (m) { add(m.spoken, m.voice); });
     });
     // Warm up an online Indian voice silently first, so it doesn't pause mid-sentence.
     if (warm) {
