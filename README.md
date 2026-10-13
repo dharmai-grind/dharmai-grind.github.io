@@ -1,6 +1,6 @@
 # DHARMAi
 
-Bite-sized, Duolingo-style lessons on Hindu philosophy, history, texts and festivals,
+Bite-sized, interactive lessons on Hindu philosophy, history, texts, festivals and science,
 with Angada the vānara and an AI tutor that cites its sources.
 
 Live site (once published): https://dharmai-grind.github.io

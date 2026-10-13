@@ -1,5 +1,5 @@
 // The lesson player: builds a lesson to fit the learner's preferences, then
-// plays it card by card, Duolingo-style.
+// plays it card by card.
 
 DH.shuffle = function (arr) {
   var a = arr.slice();
